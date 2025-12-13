@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Estoque e Vendas</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sistema de Gerenciamento</h1>
+
+        <div id="aks-indicator-popup" class="base-fixed-popup aks-indicator-popup">
+            <p>Cpf: <span id="aks-value">749.797.232-15</span></p>
+        </div>
+
+        <div class="bottom-right-fixed-bar">
+            <div id="add-product-popup" class="base-fixed-popup action-indicator-popup add-product-popup">
+                <p>➕ Produto</p> 
+            </div>
+            <div id="sell-product-popup" class="base-fixed-popup action-indicator-popup sell-product-popup">
+                <p>💸 Vender</p> 
+            </div>
+        </div>
+
+        <div id="sales-indicator-popup" class="base-fixed-popup sales-indicator-popup">
+            <p>Total Hoje: <span id="daily-sales-total-value-indicator">R$ 0,00</span></p> 
+        </div>
+        
+        <div id="notifications-container">
+            <div class="notifications-header">
+                <h3>⚠️ Notificações de Estoque</h3>
+                <button id="btn-copy-list" title="Copiar Lista de Compras">Fazer lista</button>
+            </div>
+            <ul id="notifications-list">
+                </ul>
+        </div>
+        
+        <div class="header">
+            <h2>Lista de Produtos em Estoque</h2>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Estoque</th>
+                    <th>Preço Unitário</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="product-tbody">
+                </tbody>
+        </table>
+
+    </div>
+
+    <div id="modal-product" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modal-product-title">Adicionar Novo Produto</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id" value="">
+                <label for="product-name">Nome do Produto</label>
+                <input type="text" id="product-name" required>
+                <label for="product-quantity">Quantidade em Estoque</label>
+                <input type="number" id="product-quantity" required min="0">
+                <label for="product-price">Preço Unitário (R$)</label>
+                <input type="number" id="product-price" placeholder="Opcional. Ex: 45.00" step="0.01" min="0">
+                <button type="submit">Salvar Produto</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-sale" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>💸 Registrar Venda</h2>
+            <form id="sale-form">
+                <label for="sale-product-search">Produto Vendido:</label>
+                <input type="text" id="sale-product-search" list="sale-product-options" placeholder="Comece a digitar o nome do produto..." required>
+                <datalist id="sale-product-options"></datalist>
+                
+                <label for="sale-quantity">Quantidade Vendida</label>
+                <input type="number" id="sale-quantity" required min="1">
+                
+                <div id="cpf-toggle-area" style="margin-top: 15px;">
+                    <button type="button" id="toggle-cpf-btn" class="edit-btn">Quem Esta Vendendo? (Opcional)</button>
+                    
+                    <div id="cpf-input-container" style="display: none; margin-top: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px;">
+                        <label for="customer-cpf">CPF/Identificação</label>
+                        <input type="text" id="customer-cpf" placeholder="CPF ou identificação do cliente">
+                    </div>
+                </div>
+                <label for="payment-method">Forma de Pagamento (Opcional)</label>
+                <select id="payment-method">
+                    <option value="">-- Selecione (Opcional) --</option>
+                    <option value="Dinheiro Vivo">Dinheiro Vivo</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Cartao">Cartão</option>
+                </select>
+
+                <div id="cash-payment-fields" style="display: none; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
+                    <label for="amount-given">Valor Dado (R$)</label>
+                    <input type="number" id="amount-given" step="0.01" min="0">
+                    <p style="margin-top: 10px; font-weight: bold;">Troco: <span id="change-due">R$ 0,00</span></p>
+                </div>
+                
+                <button type="submit">Confirmar Venda</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modal-sales-details" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>📊 Detalhes de Vendas</h2>
+            <div class="sales-summary">
+                <p>TOTAL DE VENDAS DO DIA: <span id="daily-total-value">R$ 0,00</span></p>
+                <p>TOTAL DE VENDAS GERAL: <span id="grand-total-value">R$ 0,00</span></p>
+            </div>
+            <div class="sales-lists">
+                <h3>Vendas Registradas Hoje</h3>
+                <ul id="daily-sales-list" class="sales-list"></ul>
+                <h3>Últimas 10 Vendas (Histórico Completo)</h3>
+                <ul id="all-sales-list" class="sales-list"></ul>
+            </div>
+            <button id="btn-clear-sales-history" class="delete-btn" style="width: 100%; margin-top: 20px;">
+                Limpar Histórico de Vendas
+            </button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
