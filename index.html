@@ -3,58 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER</title>
+    <title>BOLACHA MAKER - SUPREMO</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
+        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; --blue: #007bff; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
 
         /* HEADER */
-        #header { background: #0a0a20; height: 55px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
-        .badge-dono { background: var(--yellow); color: black; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 5px; box-shadow: 0 0 10px var(--yellow); }
+        #header { background: #0a0a20; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
+        .badge-dono { background: var(--yellow); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
+        .badge-mod { background: var(--blue); color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
 
-        /* CONTEÚDO */
-        #main-content { height: calc(100vh - 185px); width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        /* CONTENT */
+        #main-content { height: calc(100vh - 60px); width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
 
-        /* RANKING ESTILIZADO */
-        #rank-container { width: 85%; max-width: 350px; background: #0d0d25; border: 2px solid var(--yellow); border-radius: 15px; padding: 15px; margin-bottom: 10px; box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); }
-        .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; font-weight: bold; }
-        .rank-item:last-child { border: none; }
-        .rank-pos { color: var(--yellow); margin-right: 10px; }
+        /* RANKING */
+        #rank-container { width: 90%; max-width: 400px; background: #0d0d25; border: 2px solid var(--yellow); border-radius: 15px; padding: 15px; box-shadow: 0 0 20px rgba(255,204,0,0.1); }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; font-weight: bold; }
+        .rank-name-box { display: flex; align-items: center; }
 
         /* JOGO */
         #game-view { width: 100%; height: 100%; background: #000; position: relative; }
-        #player { position: absolute; width: 25px; height: 25px; background: var(--cyan); border: 2px solid white; border-radius: 5px; box-shadow: 0 0 15px var(--cyan); z-index: 100; }
+        #player { position: absolute; width: 26px; height: 26px; background: var(--cyan); border: 2px solid white; border-radius: 5px; z-index: 100; }
         .obj { position: absolute; width: 35px; height: 35px; }
         .b-block { background: #444; border: 1px solid #222; }
-        .b-lava { background: var(--red); box-shadow: inset 0 0 15px #000; }
-        .b-flag { background: var(--yellow); border-radius: 50% 50% 0 0; border: 2px solid white; }
+        .b-lava { background: var(--red); }
+        .b-flag { background: var(--yellow); border-radius: 50% 50% 0 0; border: 1px solid white; }
 
-        /* CONTROLES MOBILE FIXOS */
-        #mobile-controls { position: fixed; bottom: 150px; width: 100%; display: flex; justify-content: space-between; padding: 0 25px; box-sizing: border-box; pointer-events: none; z-index: 2000; }
-        .ctrl-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.15); border: 3px solid white; border-radius: 50%; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; pointer-events: auto; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .ctrl-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.9); }
+        /* CONTROLES */
+        #mobile-controls { position: fixed; bottom: 40px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; box-sizing: border-box; z-index: 2000; }
+        .ctrl-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.1); border: 2px solid white; border-radius: 50%; color: white; font-size: 30px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
 
-        /* BOTÕES MENU */
-        .menu-button { width: 260px; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin: 8px; font-size: 15px; text-transform: uppercase; transition: 0.2s; }
-        .btn-cyan { background: var(--cyan); color: #000; box-shadow: 0 0 10px var(--cyan); }
-        .btn-yellow { background: var(--yellow); color: #000; box-shadow: 0 0 10px var(--yellow); }
+        /* BOTÕES */
+        .menu-button { width: 260px; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin: 8px; font-size: 14px; text-transform: uppercase; }
+        .btn-cyan { background: var(--cyan); color: #000; }
+        .btn-purple { background: var(--purple); color: #fff; }
 
-        /* CHAT */
-        #chat-area { height: 130px; width: 100vw; background: #0a0a20; border-top: 2px solid #333; display: flex; flex-direction: column; }
-        #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 8px; font-size: 13px; color: #ccc; }
+        /* PAINEL ADMIN */
+        #admin-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.98); border: 4px solid var(--red); z-index: 9999; padding: 30px; overflow-y: auto; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; color: white; border: 1px solid var(--red); border-radius: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
+    <div id="ban-screen" class="hidden" style="position:fixed; inset:0; background:#000; color:red; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center;"><h1>🚫 BANIDO</h1></div>
+
     <div id="header">
         <div id="display-nick">...</div>
-        <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); border:none; color:white; padding:8px 12px; border-radius:5px; font-weight:bold;">PAINEL</button>
+        <div style="color: var(--yellow); font-weight: bold; font-size: 20px;">💰 <span id="coins">0</span></div>
+        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); border:none; color:white; padding:10px 15px; border-radius:8px; font-weight:bold;">PAINEL</button>
     </div>
 
     <div id="main-content"></div>
@@ -67,16 +68,17 @@
         <div class="ctrl-btn" ontouchstart="keys['Space']=true" ontouchend="keys['Space']=false">▲</div>
     </div>
 
-    <div id="chat-area">
-        <div id="chat-msgs"></div>
-        <div style="display:flex; padding:5px; gap:5px;">
-            <input type="text" id="chat-input" style="flex-grow:1; background:#111; color:white; border:1px solid #333; border-radius:5px; padding:8px;" placeholder="Mensagem...">
-            <button onclick="enviarChat()" style="background:var(--cyan); border:none; padding:0 15px; border-radius:5px;">OK</button>
-        </div>
+    <div id="admin-panel" class="hidden">
+        <h1 style="color:var(--red); text-align:center;">PAINEL SUPREMO</h1>
+        <input type="text" id="target-nick" placeholder="Nick do jogador">
+        <input type="number" id="target-val" placeholder="Valor/Horas">
+        <button onclick="darMoedas()" class="menu-button btn-cyan" style="width:100%;">DAR MOEDAS</button>
+        <button onclick="darAdminTemp()" class="menu-button" style="width:100%; background:var(--blue); color:white;">DAR ADMIN (Horas)</button>
+        <button onclick="banirEApagar()" class="menu-button" style="width:100%; background:red; color:white;">BANIR + APAGAR</button>
+        <button onclick="toggleAdmin()" class="menu-button" style="background:#fff; width:100%;">VOLTAR</button>
     </div>
 
     <script>
-        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o",
             authDomain: "bolachamakergame.firebaseapp.com",
@@ -87,71 +89,116 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let nick = localStorage.getItem('maker_nick') || prompt("Seu Nick:");
+        let nick = localStorage.getItem('maker_nick') || prompt("Nick:");
         if(!nick) nick = "Player" + Math.floor(Math.random()*99);
         localStorage.setItem('maker_nick', nick);
 
-        let moedas = parseInt(localStorage.getItem('maker_moedas')) || 500;
+        let moedas = 0;
         let keys = {};
         let pX, pY, vX=0, vY=0, noChao=false, blocosAtuais=[];
 
-        // CONTROLES PC
         window.onkeydown = (e) => keys[e.code] = true;
         window.onkeyup = (e) => keys[e.code] = false;
 
-        function syncUI() {
-            let isD = (nick.toLowerCase() === 'bolacha');
-            document.getElementById('display-nick').innerHTML = nick + (isD ? '<span class="badge-dono">DONO</span>' : '');
-            document.getElementById('coins').innerText = moedas;
-            if(isD) document.getElementById('admin-btn').classList.remove('hidden');
-            localStorage.setItem('maker_moedas', moedas);
-            db.ref('ranking/' + nick).set({moedas: moedas});
+        function checkPermissions() {
+            db.ref('bans/' + nick).on('value', s => { if(s.val() === true) document.getElementById('ban-screen').classList.remove('hidden'); });
+            db.ref('admins/' + nick).on('value', s => {
+                let isDono = (nick.toLowerCase() === 'bolacha');
+                let isTemp = s.val() && Date.now() < s.val().expires;
+                document.getElementById('display-nick').innerHTML = nick + (isDono ? '<span class="badge-dono">DONO</span>' : (isTemp ? '<span class="badge-mod">MOD</span>' : ''));
+                if(isDono || isTemp) document.getElementById('admin-btn').classList.remove('hidden');
+            });
         }
 
+        function syncMoedas() {
+            db.ref('ranking/' + nick).on('value', s => {
+                moedas = s.val() ? s.val().moedas : 500;
+                document.getElementById('coins').innerText = moedas;
+            });
+        }
+
+        // FUNÇÕES DE ADMIN
+        function darMoedas() {
+            let t = document.getElementById('target-nick').value;
+            let v = parseInt(document.getElementById('target-val').value);
+            db.ref('ranking/' + t).once('value', s => {
+                db.ref('ranking/' + t).set({ moedas: (s.val() ? s.val().moedas : 0) + v });
+                alert("Feito!");
+            });
+        }
+
+        function darAdminTemp() {
+            let t = document.getElementById('target-nick').value;
+            let h = parseFloat(document.getElementById('target-val').value);
+            db.ref('admins/' + t).set({ expires: Date.now() + (h * 3600000) });
+            alert("Admin dado!");
+        }
+
+        function banirEApagar() {
+            let t = document.getElementById('target-nick').value;
+            db.ref('bans/' + t).set(true);
+            db.ref('ranking/' + t).remove();
+            db.ref('admins/' + t).remove();
+            alert("Banido!");
+        }
+
+        function toggleAdmin() { document.getElementById('admin-panel').classList.toggle('hidden'); }
+
+        // TELAS
         function telaMenu() {
             document.getElementById('mobile-controls').classList.add('hidden');
             document.getElementById('main-content').innerHTML = `
-                <h1 style="color:var(--cyan); font-size:35px; margin-bottom:15px;">BOLACHA MAKER</h1>
-                <button class="menu-button btn-cyan" onclick="alert('Use o PC para criar!')">CRIAR MAPA</button>
-                <button class="menu-button btn-cyan" style="background:var(--purple); color:white" onclick="telaGaleria()">JOGAR ONLINE</button>
-                <button class="menu-button btn-yellow" onclick="telaRanking()">VER RANKING 🏆</button>
+                <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
+                <button class="menu-button btn-cyan" onclick="telaGaleria()">JOGAR</button>
+                <button class="menu-button btn-purple" onclick="telaRanking()">RANKING</button>
             `;
         }
 
         function telaRanking() {
-            document.getElementById('main-content').innerHTML = `
-                <div id="rank-container">
-                    <h3 style="text-align:center; color:var(--yellow); margin-top:0;">🏆 TOP RICOS</h3>
-                    <div id="rank-list">Carregando...</div>
-                </div>
-                <button onclick="telaMenu()" class="menu-button btn-cyan">VOLTAR</button>
-            `;
-            // BUSCA DADOS DO FIREBASE
-            db.ref('ranking').orderByChild('moedas').limitToLast(10).once('value', s => {
-                let html = "";
-                let players = [];
-                s.forEach(child => { players.push({n: child.key, m: child.val().moedas}); });
-                players.reverse().forEach((p, i) => {
-                    html += `<div class="rank-item">
-                                <span><span class="rank-pos">#${i+1}</span> ${p.n}</span>
-                                <span style="color:var(--yellow)">💰 ${p.m}</span>
-                             </div>`;
+            document.getElementById('main-content').innerHTML = `<div id="rank-container"><h3>🏆 RANKING GLOBAL</h3><div id="list">Carregando...</div></div><button onclick="telaMenu()" class="menu-button">VOLTAR</button>`;
+            
+            // Busca o ranking e os admins simultaneamente
+            db.ref('admins').once('value', adminSnap => {
+                const admins = adminSnap.val() || {};
+                db.ref('ranking').orderByChild('moedas').limitToLast(10).once('value', s => {
+                    let html = ""; let players = [];
+                    s.forEach(c => { players.push({n: c.key, m: c.val().moedas}); });
+                    players.reverse().forEach((u, i) => {
+                        let isD = (u.n.toLowerCase() === 'bolacha');
+                        let isT = admins[u.n] && Date.now() < admins[u.n].expires;
+                        let tag = isD ? '<span class="badge-dono">DONO</span>' : (isT ? '<span class="badge-mod">MOD</span>' : '');
+                        
+                        html += `<div class="rank-item">
+                                    <div class="rank-name-box">#${i+1} ${u.n} ${tag}</div>
+                                    <span style="color:var(--yellow)">💰 ${u.m}</span>
+                                 </div>`;
+                    });
+                    document.getElementById('list').innerHTML = html;
                 });
-                document.getElementById('rank-list').innerHTML = html || "Nenhum dado encontrado.";
+            });
+        }
+
+        function telaGaleria() {
+            document.getElementById('main-content').innerHTML = `<h2>MAPAS</h2><div id="m-list"></div><button onclick="telaMenu()">VOLTAR</button>`;
+            db.ref('mapas').once('value', s => {
+                s.forEach(m => {
+                    let b = document.createElement('button'); b.className = "menu-button btn-purple";
+                    b.innerText = "AUTOR: " + m.val().autor;
+                    b.onclick = () => carregarMapa(m.val().dados);
+                    document.getElementById('m-list').appendChild(b);
+                });
             });
         }
 
         function carregarMapa(dados) {
             document.getElementById('mobile-controls').classList.remove('hidden');
             document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="player"></div><div id="objs"></div></div>`;
-            const container = document.getElementById('objs');
             blocosAtuais = [];
             dados.forEach(d => {
-                const o = document.createElement('div');
-                o.className = 'obj ' + d.cl.replace('cell ', '');
+                const o = document.createElement('div'); o.className = 'obj ' + d.cl.replace('cell ', '');
                 let x = (d.id % 40) * 35; let y = Math.floor(d.id / 40) * 35;
                 o.style.left = x + 'px'; o.style.top = y + 'px';
-                container.appendChild(o);
+                document.getElementById('objs').appendChild(o);
                 if(d.cl.includes('spawn')) { pX = x; pY = y; }
                 blocosAtuais.push({x, y, type: d.cl});
             });
@@ -160,66 +207,23 @@
 
         function loop() {
             if(!document.getElementById('player')) return;
-            
-            if(keys['KeyA'] || keys['ArrowLeft']) vX = -5.5;
-            else if(keys['KeyD'] || keys['ArrowRight']) vX = 5.5;
-            else vX = 0;
-
+            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6; else if(keys['KeyD'] || keys['ArrowRight']) vX = 6; else vX = 0;
             if((keys['Space'] || keys['KeyW'] || keys['ArrowUp']) && noChao) { vY = -14; noChao = false; }
-
-            vY += 0.85; pX += vX; pY += vY; noChao = false;
-
+            vY += 0.8; pX += vX; pY += vY; noChao = false;
             blocosAtuais.forEach(b => {
-                if(pX < b.x + 32 && pX + 22 > b.x && pY < b.y + 32 && pY + 22 > b.y) {
-                    if(b.type.includes('block')) {
-                        if(vY > 0) { pY = b.y - 25; vY = 0; noChao = true; }
-                        else if(vY < 0) { pY = b.y + 35; vY = 0; }
-                    }
-                    if(b.type.includes('lava')) { telaMenu(); alert("Você caiu na lava!"); }
-                    if(b.type.includes('flag')) { 
-                        alert("VENCEU! +100 moedas"); 
-                        moedas += 100; 
-                        syncUI(); 
-                        telaMenu(); 
-                    }
+                if(pX < b.x + 30 && pX + 24 > b.x && pY < b.y + 30 && pY + 24 > b.y) {
+                    if(b.type.includes('block')) { if(vY > 0) { pY = b.y - 26; vY = 0; noChao = true; } }
+                    if(b.type.includes('lava')) { pX = 0; pY = 0; telaMenu(); }
+                    if(b.type.includes('flag')) { alert("GANHOU!"); db.ref('ranking/'+nick).set({moedas: moedas + 50}); telaMenu(); }
                 }
             });
-            const pl = document.getElementById('player');
-            pl.style.left = pX + 'px'; pl.style.top = pY + 'px';
+            document.getElementById('player').style.left = pX + 'px';
+            document.getElementById('player').style.top = pY + 'px';
             requestAnimationFrame(loop);
         }
 
-        function telaGaleria() {
-            document.getElementById('main-content').innerHTML = `<h2>MAPAS ONLINE</h2><div id="maps-list" style="overflow-y:auto; max-height:200px;"></div><button onclick="telaMenu()" class="menu-button btn-cyan">VOLTAR</button>`;
-            db.ref('mapas').once('value', s => {
-                const list = document.getElementById('maps-list');
-                s.forEach(m => {
-                    let b = document.createElement('button');
-                    b.className = "menu-button btn-purple";
-                    b.innerText = "MAPA: " + m.val().autor;
-                    b.onclick = () => carregarMapa(m.val().dados);
-                    list.appendChild(b);
-                });
-            });
-        }
-
-        function enviarChat() {
-            let i = document.getElementById('chat-input');
-            if(!i.value) return;
-            db.ref('chat').push({n: nick, t: i.value, d: (nick.toLowerCase()==='bolacha')});
-            i.value = '';
-        }
-
-        db.ref('chat').limitToLast(12).on('value', s => {
-            let d = document.getElementById('chat-msgs'); d.innerHTML = '';
-            s.forEach(x => { 
-                let val = x.val();
-                d.innerHTML += `<div><b style="${val.d?'color:var(--yellow)':''}">${val.n}:</b> ${val.t}</div>`; 
-            });
-            d.scrollTop = d.scrollHeight;
-        });
-
-        syncUI();
+        checkPermissions();
+        syncMoedas();
         telaMenu();
     </script>
 </body>
