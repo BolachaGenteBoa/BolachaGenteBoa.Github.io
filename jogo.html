@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Maker Game Studio</title>
+    <link rel="stylesheet" href="Styles.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="logo">MAKER<span>GAME</span></div>
+        <div class="status-group">
+            <button id="admin-panel-btn" class="hidden admin-btn">ADMIN</button>
+            <div class="status-card coin">💰 <span id="coin-value">500</span></div>
+            <div class="status-card nick">👤 <span id="user-name">...</span></div>
+        </div>
+    </header>
+
+    <div id="nick-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h2>BEM-VINDO</h2>
+            <input type="text" id="nick-input" placeholder="Seu Nickname...">
+            <button id="btn-save-nick" class="glow-button">ENTRAR</button>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="modal-overlay hidden">
+        <div class="modal-card admin-card">
+            <h2>ADMIN PANEL</h2>
+            <button onclick="adminAddCoins()" class="menu-button variant-1">💰 +1000 MOEDAS</button>
+            <button onclick="adminClearLevels()" class="menu-button variant-2">🗑️ LIMPAR TODOS NÍVEIS</button>
+            <button onclick="closeAdmin()" class="back-button">FECHAR</button>
+        </div>
+    </div>
+
+    <main id="main-menu" class="screen">
+        <div class="card main-box">
+            <h1 class="glitch">GAME STUDIO</h1>
+            <div class="button-stack">
+                <button id="btn-play" class="menu-button variant-1">JOGAR NÍVEIS</button>
+                <button id="btn-create" class="menu-button variant-2">CRIAR NÍVEIS</button>
+            </div>
+        </div>
+    </main>
+
+    <section id="community-tab" class="screen hidden">
+        <div class="community-container">
+            <header class="tab-header">
+                <h2>COMUNIDADE</h2>
+                <button id="btn-back-comm" class="back-button">VOLTAR</button>
+            </header>
+            <div id="level-list" class="level-grid"></div>
+        </div>
+    </section>
+
+    <section id="level-editor" class="screen hidden">
+        <div class="editor-layout">
+            <aside class="toolbar" id="editor-sidebar">
+                <div class="tool-list">
+                    <button class="tool" data-type
