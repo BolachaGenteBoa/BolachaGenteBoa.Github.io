@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAKER GAME - OFICIAL</title>
+    <title>MAKER GAME</title>
     <style>
-        /* === 1. ESTILO VISUAL (O QUE VOCÊ TINHA ANTES) === */
+        /* ESTILO ORIGINAL RESTAURADO */
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #050510; color: white; overflow: hidden; }
         .hidden { display: none !important; }
         
@@ -18,11 +18,17 @@
         .badge-dono { background: #ffcc00; color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 5px; }
         .btn-admin { background: #ff4444; color: white; border: none; padding: 5px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px; }
 
-        /* MENU PRINCIPAL */
+        /* MENU PRINCIPAL (ESTILO DA IMAGEM 5) */
         #main-menu { height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .menu-button { width: 250px; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; background: #00f2ff; color: black; }
+        .menu-button { 
+            width: 250px; padding: 15px; border: none; border-radius: 8px; 
+            font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s;
+        }
+        .btn-blue { background: #00f2ff; color: black; }
+        .btn-purple { background: #bc13fe; color: white; }
+        .btn-yellow { background: #ffcc00; color: black; }
 
-        /* EDITOR (O LAYOUT QUE VOCÊ QUERIA) */
+        /* EDITOR COM BARRA LATERAL (ESTILO DA IMAGEM 1) */
         #level-editor { display: flex; height: calc(100vh - 60px); }
         
         #editor-sidebar { 
@@ -49,7 +55,7 @@
         .cell.spawn { background: #00ff00; opacity: 0.4; }
         .cell.flag { background: #ffff00; clip-path: polygon(20% 0%, 100% 50%, 20% 100%); }
 
-        /* MODAL */
+        /* MODAL DE NICKNAME */
         #nick-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: #1a1a3a; padding: 30px; border-radius: 15px; border: 2px solid #00f2ff; text-align: center; }
     </style>
@@ -59,16 +65,16 @@
     <div id="header">
         <div style="font-weight: bold; color: #00f2ff; font-size: 18px;">MAKER GAME</div>
         <div style="display: flex; align-items: center;">
-            <button id="admin-btn" class="btn-admin hidden">ADMIN</button>
+            <button id="admin-btn" class="btn-admin hidden" onclick="alert('Painel Admin')">ADMIN</button>
             <span id="user-display"></span>
             <span style="margin-left: 15px;">💰 <span id="coin-value">0</span></span>
         </div>
     </div>
 
     <div id="main-menu">
-        <button class="menu-button" id="btn-create">CRIAR MAPA</button>
-        <button class="menu-button" style="background: #bc13fe; color: white;">NÍVEIS</button>
-        <button class="menu-button" style="background: #ffcc00;">RANKING</button>
+        <button class="menu-button btn-blue" id="btn-create">CRIAR MAPA</button>
+        <button class="menu-button btn-purple" id="btn-levels">NÍVEIS</button>
+        <button class="menu-button btn-yellow" id="btn-rank">RANKING</button>
     </div>
 
     <div id="level-editor" class="hidden">
@@ -78,7 +84,7 @@
             <div class="tool" data-type="spawn">SPAWN</div>
             <div class="tool" data-type="flag">META</div>
             <div class="tool" data-type="sell" style="color: #ff4444;">VENDER</div>
-            <button onclick="location.reload()" style="margin-top: 20px; background: none; color: white; border: 1px solid #444; padding: 5px; cursor: pointer;">SAIR</button>
+            <button onclick="location.reload()" style="margin-top: 20px; background: none; color: white; border: 1px solid #444; padding: 5px; cursor: pointer; border-radius: 5px;">SAIR</button>
         </div>
         <div id="editor-main">
             <div id="grid-canvas"></div>
@@ -88,6 +94,88 @@
     <div id="nick-modal" class="hidden">
         <div class="modal-content">
             <h2 style="color:#00f2ff">BEM-VINDO</h2>
-            <input type="text" id="nick-input" placeholder="Seu Nick..." style="padding:10px; border-radius:5px; border:none; width:80%;">
-            <br><br>
-            <button class="menu-button"
+            <input type="text" id="nick-input" placeholder="Seu Nick..." style="padding:10px; border-radius:5px; border:none; width:220px; margin-bottom:20px;">
+            <br>
+            <button class="menu-button btn-blue" id="btn-save-nick" style="width: 240px;">ENTRAR</button>
+        </div>
+    </div>
+
+    <script>
+        // LÓGICA INTEGRADA (IMAGEM 2 - FIX)
+        let coins = localStorage.getItem('coins') ? parseInt(localStorage.getItem('coins')) : 7475;
+        let nick = localStorage.getItem('nickname') || "";
+        let selectedTool = null;
+
+        function updateUI() {
+            document.getElementById('coin-value').innerText = coins;
+            const display = document.getElementById('user-display');
+            display.innerHTML = nick || "...";
+            
+            if(nick === "Bolacha") {
+                display.innerHTML += ' <span class="badge-dono">DONO</span>';
+                document.getElementById('admin-btn').classList.remove('hidden');
+            }
+            localStorage.setItem('coins', coins);
+        }
+
+        function initGrid() {
+            const canvas = document.getElementById('grid-canvas');
+            canvas.innerHTML = '';
+            for (let i = 0; i < 300; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => {
+                    if (!selectedTool) return;
+                    let cost = (selectedTool === 'block' || selectedTool === 'lava') ? 5 : 0;
+                    
+                    if (selectedTool === 'sell') {
+                        if (cell.classList.contains('block') || cell.classList.contains('lava')) {
+                            coins += 5; cell.className = 'cell';
+                        }
+                    } else if (coins >= cost) {
+                        if (selectedTool === 'spawn' || selectedTool === 'flag') {
+                            const old = document.querySelector('.' + selectedTool);
+                            if(old) old.className = 'cell';
+                        }
+                        if(!cell.classList.contains(selectedTool)) {
+                            cell.className = 'cell ' + selectedTool;
+                            coins -= cost;
+                        }
+                    }
+                    updateUI();
+                };
+                canvas.appendChild(cell);
+            }
+        }
+
+        window.onload = () => {
+            if(!nick) document.getElementById('nick-modal').classList.remove('hidden');
+            updateUI();
+
+            document.getElementById('btn-create').onclick = () => {
+                initGrid();
+                document.getElementById('main-menu').classList.add('hidden');
+                document.getElementById('level-editor').classList.remove('hidden');
+            };
+
+            document.querySelectorAll('.tool').forEach(t => {
+                t.onclick = () => {
+                    document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
+                    t.classList.add('active');
+                    selectedTool = t.dataset.type;
+                };
+            });
+
+            document.getElementById('btn-save-nick').onclick = () => {
+                const val = document.getElementById('nick-input').value.trim();
+                if(val.length >= 2) {
+                    nick = val;
+                    localStorage.setItem('nickname', nick);
+                    document.getElementById('nick-modal').classList.add('hidden');
+                    updateUI();
+                }
+            };
+        };
+    </script>
+</body>
+</html>
