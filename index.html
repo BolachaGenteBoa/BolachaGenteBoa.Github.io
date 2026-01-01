@@ -3,46 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - BOMBER MODE</title>
+    <title>BOLACHA MAKER - FIX</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
-        .hidden { display: none !important; }
-
-        #header { background: #0a0a20; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
-        
-        #game-container { position: relative; width: 100vw; height: 65vh; background: #000; overflow: hidden; }
-        #player { position: absolute; width: 25px; height: 25px; background: var(--cyan); z-index: 100; border-radius: 4px; border: 2px solid white; }
-        
-        .block-obj { position: absolute; width: 30px; height: 30px; transition: 0.2s; }
+        :root { --cyan: #00f2ff; --red: #ff4444; --bg: #050510; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        #game-container { position: relative; width: 100vw; height: 70vh; background: #000; border-bottom: 2px solid var(--cyan); }
+        #player { position: absolute; width: 20px; height: 20px; background: var(--cyan); border-radius: 4px; z-index: 100; }
+        .block-obj { position: absolute; width: 35px; height: 35px; border: 0.1px solid rgba(255,255,255,0.1); }
         .b-pedra { background: #555; }
-        .b-erva { background: #2ecc71; }
         .b-lava { background: var(--red); box-shadow: 0 0 10px var(--red); }
-        .b-meta { background: var(--yellow); border-radius: 50%; font-size: 15px; }
-        
-        /* ESTILO DA BOMBA */
-        .b-bomba { background: #333; border-radius: 50%; border: 3px solid #000; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-        .b-bomba::before { content: '💣'; }
-        .explosiva { background: var(--red) !important; animation: pisca 0.5s infinite; }
-
-        @keyframes pisca { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-
-        /* CONTROLES */
-        #controls { height: 25vh; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; padding: 10px; background: #0a0a20; }
-        .btn-joy { width: 70px; height: 70px; background: #1a1a3a; border: 2px solid var(--cyan); border-radius: 15px; color: white; font-size: 24px; }
-        .btn-action { background: var(--purple); border-color: white; width: 100%; height: 60px; border-radius: 10px; font-weight: bold; }
+        .b-bomba { background: #333; border-radius: 50%; border: 2px solid #000; }
+        .b-bomba::after { content: '💣'; font-size: 12px; display: flex; justify-content: center; }
+        #controls { height: 30vh; display: flex; justify-content: space-around; align-items: center; background: #0a0a20; }
+        .btn { width: 80px; height: 60px; background: #1a1a3a; border: 2px solid var(--cyan); color: white; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div id="header">
-        <div>💰 <span id="coins">0</span> | 🎒 <span id="inv">Vazio</span></div>
-        <button onclick="location.reload()" style="background:var(--red); border:none; color:white; padding:5px; border-radius:5px;">SAIR</button>
-    </div>
 
     <div id="game-container">
         <div id="player"></div>
@@ -50,12 +30,10 @@
     </div>
 
     <div id="controls">
-        <div style="display:flex; gap:10px">
-            <button class="btn-joy" onmousedown="move('left')" onmouseup="stop()">◀</button>
-            <button class="btn-joy" onmousedown="move('right')" onmouseup="stop()">▶</button>
-        </div>
-        <button class="btn-joy" onclick="jump()" style="margin: 0 auto;">▲ PULAR</button>
-        <button class="btn-action" onclick="interagir()">PEGAR / SOLTAR (E)</button>
+        <button class="btn" onmousedown="velX=-6" onmouseup="velX=0">ESQUERDA</button>
+        <button class="btn" onclick="jump()">PULAR</button>
+        <button class="btn" onmousedown="velX=6" onmouseup="velX=0">DIREITA</button>
+        <button class="btn" style="border-color: #bc13fe;" onclick="interagir()">PEGAR (E)</button>
     </div>
 
     <script>
@@ -70,126 +48,72 @@
         const db = firebase.database();
 
         let posX = 50, posY = 50, velY = 0, velX = 0, isJumping = false;
+        let blocos = [];
         let temBomba = false;
-        let blocosRenderizados = [];
-        const gravity = 0.8;
 
-        function baixarMapa() {
+        function carregar() {
             db.ref('mapas').limitToLast(1).once('value', snap => {
+                const render = document.getElementById('map-render');
+                render.innerHTML = '';
+                blocos = [];
+
+                if (!snap.exists()) {
+                    // SE NÃO TIVER MAPA, CRIA UM CHÃO PARA NÃO FICAR PRETO
+                    for(let i=0; i<10; i++) { criarBloco(i*35, 300, 'cell b-pedra', i); }
+                    return;
+                }
+
                 snap.forEach(m => {
-                    const render = document.getElementById('map-render');
-                    render.innerHTML = '';
-                    blocosRenderizados = [];
                     m.val().dados.forEach(d => {
-                        const b = document.createElement('div');
-                        b.id = "bloco-" + d.id;
-                        b.className = 'block-obj ' + d.cl.replace('cell ', 'b-');
                         let x = (d.id % 20) * 35;
                         let y = Math.floor(d.id / 20) * 35;
-                        b.style.left = x + 'px';
-                        b.style.top = y + 'px';
-                        render.appendChild(b);
+                        criarBloco(x, y, d.cl, d.id);
                         if(d.cl.includes('spawn')) { posX = x; posY = y; }
-                        blocosRenderizados.push({id: d.id, x, y, type: d.cl, el: b});
                     });
                 });
             });
         }
 
+        function criarBloco(x, y, cl, id) {
+            const b = document.createElement('div');
+            b.className = 'block-obj ' + cl.replace('cell ', 'b-');
+            b.style.left = x + 'px';
+            b.style.top = y + 'px';
+            document.getElementById('map-render').appendChild(b);
+            blocos.push({x, y, type: cl, el: b});
+        }
+
         function loop() {
-            velY += gravity;
+            velY += 0.8; // Gravidade
             posY += velY;
             posX += velX;
 
-            blocosRenderizados.forEach((b, index) => {
-                if (posX < b.x + 30 && posX + 25 > b.x && posY < b.y + 30 && posY + 25 > b.y) {
-                    if (b.type.includes('lava')) morrer("VOCÊ DERRETEU NA LAVA!");
-                    if (b.type.includes('meta')) vencer();
-                    if (b.type.includes('pedra') || b.type.includes('erva')) {
-                        if(velY > 0) { posY = b.y - 25; velY = 0; isJumping = false; }
+            blocos.forEach(b => {
+                if (posX < b.x + 30 && posX + 20 > b.x && posY < b.y + 30 && posY + 20 > b.y) {
+                    if (b.type.includes('pedra')) {
+                        if(velY > 0) { posY = b.y - 20; velY = 0; isJumping = false; }
                     }
+                    if (b.type.includes('lava')) { location.reload(); }
                 }
             });
 
-            if(posY > 800) morrer("CAIU DO MUNDO!");
+            if(posY > 1000) { posX=50; posY=50; velY=0; } // Reset se cair
+            
             document.getElementById('player').style.left = posX + 'px';
             document.getElementById('player').style.top = posY + 'px';
             requestAnimationFrame(loop);
         }
 
+        function jump() { if(!isJumping) { velY = -12; isJumping = true; } }
+        
         function interagir() {
-            if (temBomba) {
-                // SOLTAR BOMBA
-                temBomba = false;
-                document.getElementById('inv').innerText = "Vazio";
-                const bId = Date.now();
-                const bX = posX;
-                const bY = posY;
-                
-                const bombaEl = document.createElement('div');
-                bombaEl.className = 'block-obj b-bomba explosiva';
-                bombaEl.style.left = bX + 'px';
-                bombaEl.style.top = bY + 'px';
-                document.getElementById('map-render').appendChild(bombaEl);
-
-                // CONTTAGEM 10 SEGUNDOS
-                setTimeout(() => {
-                    explodir(bX, bY);
-                    bombaEl.remove();
-                }, 10000);
-
-            } else {
-                // TENTAR PEGAR BOMBA
-                blocosRenderizados.forEach((b, i) => {
-                    if (b.type.includes('bomba') && Math.abs(posX - b.x) < 40 && Math.abs(posY - b.y) < 40) {
-                        temBomba = true;
-                        document.getElementById('inv').innerText = "💣 BOMBA!";
-                        b.el.remove();
-                        blocosRenderizados.splice(i, 1);
-                    }
-                });
+            // Lógica simplificada da bomba para teste
+            if(!temBomba) {
+                alert("Procure uma bomba no mapa!");
             }
         }
 
-        function explodir(ex, ey) {
-            // Desenha efeito de explosão
-            const efeito = document.createElement('div');
-            efeito.style.position = 'absolute';
-            efeito.style.left = (ex - 50) + 'px';
-            efeito.style.top = (ey - 50) + 'px';
-            efeito.style.width = '130px';
-            efeito.style.height = '130px';
-            efeito.style.background = 'radial-gradient(circle, yellow, red, transparent)';
-            efeito.style.borderRadius = '50%';
-            efeito.style.zIndex = '500';
-            document.getElementById('map-render').appendChild(efeito);
-            setTimeout(() => efeito.remove(), 500);
-
-            // Se o player estiver perto, MORRE
-            let dist = Math.sqrt(Math.pow(posX - ex, 2) + Math.pow(posY - ey, 2));
-            if (dist < 80) morrer("KABOOOOM! Você estava muito perto!");
-
-            // Destrói blocos ao redor (menos o Metal)
-            blocosRenderizados = blocosRenderizados.filter(b => {
-                let d = Math.sqrt(Math.pow(b.x - ex, 2) + Math.pow(b.y - ey, 2));
-                if (d < 100 && !b.type.includes('metal')) {
-                    b.el.remove();
-                    return false;
-                }
-                return true;
-            });
-        }
-
-        function morrer(msg) { alert(msg); location.reload(); }
-        function vencer() { alert("MITO! GANHOU!"); location.reload(); }
-        function move(dir) { velX = dir === 'left' ? -6 : 6; }
-        function stop() { velX = 0; }
-        function jump() { if(!isJumping) { velY = -13; isJumping = true; } }
-
-        window.addEventListener('keydown', e => { if(e.key.toLowerCase() === 'e') interagir(); });
-        
-        document.getElementById('coins').innerText = localStorage.getItem('maker_moedas');
-        baixarMapa();
+        carregar();
         loop();
     </script>
 </body>
