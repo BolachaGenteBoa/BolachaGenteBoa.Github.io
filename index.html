@@ -57,4 +57,32 @@
         <div class="editor-layout">
             <aside class="toolbar" id="editor-sidebar">
                 <div class="tool-list">
-                    <button class="tool" data-type
+                    <button class="tool" data-type="block">📦 BLOCO (5)</button>
+                    <button class="tool" data-type="lava">🔥 LAVA (5)</button>
+                    <button class="tool" data-type="flag">🚩 META</button>
+                    <button class="tool" data-type="spawn">👤 SPAWN</button>
+                    <button class="tool sell-btn" data-type="sell">♻️ VENDER</button>
+                </div>
+                <button id="publish-btn" class="save-button">PUBLICAR NÍVEL</button>
+            </aside>
+            <main class="drawing-area">
+                <div id="grid-canvas" class="grid-container">
+                    <div id="player" class="hidden"></div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <div id="mobile-controls" class="mobile-ui hidden">
+        <div class="d-pad">
+            <button id="btn-left">◀</button>
+            <button id="btn-right">▶</button>
+        </div>
+        <div class="action-pad">
+            <button id="btn-jump">PULO</button>
+        </div>
+    </div>
+
+    <script src="top.js"></script>
+</body>
+</html>
