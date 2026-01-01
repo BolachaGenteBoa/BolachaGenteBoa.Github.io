@@ -3,79 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MAKER GAME PRO - JOGÁVEL</title>
+    <title>BOLACHA MAKER - ONLINE REAL</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
         :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* HEADER */
         #header { background: #0a0a20; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
         .badge-dono { background: var(--yellow); color: black; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
 
-        /* MENU */
-        #main-menu { height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .menu-button { width: 260px; padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; transition: 0.3s; }
+        #main-menu { height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .menu-button { width: 260px; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; transition: 0.3s; }
         .btn-cyan { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
         .btn-purple { background: var(--purple); color: white; box-shadow: 0 0 15px var(--purple); }
+        .btn-yellow { background: var(--yellow); color: black; box-shadow: 0 0 15px var(--yellow); }
 
-        /* EDITOR E GRID */
         #level-editor { display: flex; height: calc(100vh - 65px); }
-        #sidebar { width: 120px; background: #0a0a20; display: flex; flex-direction: column; gap: 10px; padding: 15px; border-right: 1px solid #333; }
-        .tool { padding: 12px; background: #1a1a3a; border: 1.5px solid #444; color: white; cursor: pointer; text-align: center; border-radius: 8px; font-size: 11px; font-weight: bold; }
+        #sidebar { width: 110px; background: #0a0a20; display: flex; flex-direction: column; gap: 8px; padding: 10px; border-right: 1px solid #333; }
+        .tool { padding: 10px; background: #1a1a3a; border: 1.5px solid #444; color: white; cursor: pointer; text-align: center; border-radius: 8px; font-size: 10px; font-weight: bold; }
         .tool.active { border-color: var(--cyan); background: #004455; box-shadow: 0 0 10px var(--cyan); }
-        #editor-main { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
-        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); width: 95vw; max-width: 600px; aspect-ratio: 4/3; border: 2px solid #222; }
+        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); width: 95vw; max-width: 600px; aspect-ratio: 4/3; border: 1px solid #333; background: #000; }
         .cell { border: 0.1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; }
 
-        /* BLOCOS */
-        .block { background: #555; border: 1px solid #777; }
-        .lava { background: #ff4400; box-shadow: inset 0 0 10px #000; }
-        .spawn { background: #00ff00 !important; border: 2px solid white !important; box-shadow: 0 0 15px #00ff00; }
-        .flag { background: #ffcc00 !important; border: 2px solid white !important; box-shadow: 0 0 15px #ffcc00; border-radius: 0 50% 50% 0; }
+        .block { background: #555; }
+        .lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
+        .spawn { background: #0f0 !important; color: #000; font-weight: bold; border: 2px solid white !important; }
+        .flag { background: var(--yellow) !important; color: #000; font-weight: bold; border: 2px solid white !important; }
 
-        /* TELAS ADICIONAIS */
-        .screen-overlay { padding: 20px; text-align: center; height: 80vh; overflow-y: auto; }
-        #admin-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid var(--red); padding: 25px; border-radius: 15px; z-index: 1000; width: 280px; }
+        .screen-overlay { position: fixed; top: 65px; left: 0; width: 100%; height: calc(100vh - 65px); background: var(--bg); z-index: 50; padding: 20px; box-sizing: border-box; text-align: center; overflow-y: auto; }
+        table { width: 100%; margin-top: 15px; border-collapse: collapse; }
+        td { padding: 10px; border-bottom: 1px solid #1a1a3a; }
+        
+        #admin-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 2px solid var(--red); padding: 20px; border-radius: 15px; z-index: 100; width: 280px; box-shadow: 0 0 30px var(--red); }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="font-weight: bold; color: var(--cyan); font-size: 20px;">MAKER PRO</div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <button id="btn-admin-open" class="hidden" onclick="abrirAdmin()" style="background:var(--red); color:white; border:none; padding:5px 10px; cursor:pointer;">ADMIN</button>
-            <div>Bolacha <span class="badge-dono">DONO</span></div>
-            <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
+        <div style="font-weight: bold; color: var(--cyan); font-size: 18px;">MAKER ONLINE</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btn-admin-open" class="hidden" onclick="abrirAdmin()" style="background:var(--red); color:white; border:none; padding:5px; font-size:10px;">ADMIN</button>
+            <div id="user-tag">...</div>
+            <div style="color: var(--yellow);">💰 <span id="coins">0</span></div>
         </div>
     </div>
 
     <div id="main-menu">
-        <button class="menu-button btn-cyan" onclick="mudarTela('editor')">Criar Novo Mapa</button>
-        <button class="menu-button btn-purple" onclick="mudarTela('niveis')">Jogar Níveis</button>
+        <button class="menu-button btn-cyan" onclick="abrirTela('editor')">Criar Mapa</button>
+        <button class="menu-button btn-purple" onclick="abrirTela('niveis')">Níveis Online</button>
+        <button class="menu-button btn-yellow" onclick="abrirTela('rank')">Ranking Global</button>
+    </div>
+
+    <div id="rank-screen" class="hidden screen-overlay">
+        <h2 style="color: var(--yellow);">🏆 RANKING GLOBAL</h2>
+        <table id="rank-table">
+            <thead><tr><th>#</th><th>PLAYER</th><th>MOEDAS</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <button class="menu-button" style="background:#444; color:white; margin-top:20px" onclick="location.reload()">VOLTAR</button>
     </div>
 
     <div id="levels-screen" class="hidden screen-overlay">
-        <h2 style="color: var(--purple);">MEUS NÍVEIS PUBLICADOS</h2>
-        <div id="levels-container" style="display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 20px 0;">
-            </div>
-        <button class="menu-button" style="background: #444; color: white;" onclick="location.reload()">Voltar ao Menu</button>
+        <h2 style="color: var(--purple);">MAPAS DA COMUNIDADE</h2>
+        <div id="levels-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <button class="menu-button btn-cyan" onclick="location.reload()" style="margin-top:20px">VOLTAR</button>
     </div>
 
     <div id="editor-ui" class="hidden">
         <div id="level-editor">
             <div id="sidebar">
-                <div class="tool" id="t-block" onclick="setTool('block')">BLOCO (5)</div>
-                <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA (5)</div>
-                <div class="tool" id="t-spawn" onclick="setTool('spawn')" style="color:#0f0">SPAWN</div>
-                <div class="tool" id="t-flag" onclick="setTool('flag')" style="color:#ff0">META</div>
-                <div class="tool" id="t-sell" onclick="setTool('sell')" style="color:var(--red);">VENDER</div>
-                <button onclick="publicar()" style="background:var(--cyan); border:none; padding:12px; border-radius:8px; font-weight:bold; margin-top:20px; cursor:pointer;">PUBLICAR</button>
-                <button onclick="location.reload()" style="background:none; color:white; border:1px solid #444; padding:5px; margin-top:10px; cursor:pointer;">SAIR</button>
+                <div class="tool" id="t-block" onclick="setTool('block')">BLOCO</div>
+                <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA</div>
+                <div class="tool" id="t-spawn" onclick="setTool('spawn')">INÍCIO</div>
+                <div class="tool" id="t-flag" onclick="setTool('flag')">META</div>
+                <div class="tool" id="t-sell" onclick="setTool('sell')" style="color:var(--red)">VENDER</div>
+                <button onclick="publicarOnline()" style="background:#0f0; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-top:15px;">PUBLICAR</button>
             </div>
             <div id="editor-main"><div id="grid-canvas"></div></div>
         </div>
     </div>
 
     <div id="admin-panel" class="hidden">
-        <h3 style="color: var
+        <h3 style="color:var(--red); text-align:center">PAINEL DONO</h3>
+        <button onclick="addMoedas(50000)" style="width:100%; padding:10px; margin-bottom:5px;">+50.000 Moedas</button>
+        <button onclick="resetarServidor()" style="width:100%; padding:10px; color:red;">RESETAR RANKING</button>
+        <button onclick="document.getElementById('admin-panel').classList.add('hidden')" style="width:100%; padding:10px; margin-top:10px;">FECHAR</button>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO REAL DO FRANCISCO
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o",
+            authDomain: "bolachamakergame.firebaseapp.com",
+            databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com",
+            projectId: "bolachamakergame",
+            storageBucket: "bolachamakergame.firebasestorage.app",
+            messagingSenderId: "207720367456",
+            appId: "1:207720367456:web:1a58957162be2b080f4a05",
+            measurementId: "G-ERQNEZP1GM"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let nick = localStorage.getItem('maker_nick') || prompt("Qual seu Nick para o Ranking?");
+        if(!nick) nick = "Player" + Math.floor(Math.random()*100);
+        localStorage.setItem('maker_nick', nick);
+
+        let moedas = parseInt(localStorage.getItem('maker_moedas')) || 7475;
+        let tool = null;
+
+        function updateUI() {
+            document.getElementById('coins').innerText = moedas;
+            document.getElementById('user-tag').innerHTML = nick + (nick === "Bolacha" ? ' <span class="badge-dono">DONO</span>' : '');
+            if(nick === "Bolacha") document.getElementById('btn-admin-open').classList.remove('hidden');
+            localStorage.setItem('maker_moedas', moedas);
+            db.ref('ranking/' + nick).set({moedas: moedas});
+        }
+
+        function abrirTela(t) {
+            document.getElementById('main-menu').classList.add('hidden');
+            if(t === 'editor') { document.getElementById('editor-ui').classList.remove('hidden'); construirGrid(); }
+            if(t === 'rank') { document.getElementById('rank-screen').classList.remove('hidden'); carregarRank(); }
+            if(t === 'niveis') { document.getElementById('levels-screen').classList.remove('hidden'); carregarNiveis(); }
+        }
+
+        function construirGrid() {
+            const g = document.getElementById('grid-canvas'); g.innerHTML = '';
+            for(let i=0; i<300; i++) {
+                const c = document.createElement('div'); c.className = 'cell';
+                c.onclick = () => {
+                    if(tool === 'spawn') { document.querySelectorAll('.spawn').forEach(s=>{s.className='cell';s.innerText='';}); c.className='cell spawn'; c.innerText='👤'; }
+                    else if(tool === 'flag') { document.querySelectorAll('.flag').forEach(f=>{f.className='cell';f.innerText='';}); c.className='cell flag'; c.innerText='🚩'; }
+                    else if(tool === 'block' && moedas >= 5) { c.className = 'cell block'; moedas -= 5; }
+                    else if(tool === 'lava' && moedas >= 5) { c.className = 'cell lava'; moedas -= 5; }
+                    else if(tool === 'sell') { if(c.className!=='cell') moedas += 5; c.className = 'cell'; c.innerText = ''; }
+                    updateUI();
+                };
+                g.appendChild(c);
+            }
+        }
+
+        function setTool(t) { tool = t; document.querySelectorAll('.tool').forEach(b=>b.classList.remove('active')); document.getElementById('t-'+t).classList.add('active'); }
+
+        function publicarOnline() {
+            if(!document.querySelector('.spawn') || !document.querySelector('.flag')) return alert("Falta Início ou Meta!");
+            let mapa = [];
+            document.querySelectorAll('.cell').forEach((c, i) => { if(c.className !== 'cell') mapa.push({id: i, cl: c.className, h: c.innerText}); });
+            db.ref('mapas/').push({ autor: nick, dados: mapa });
+            alert("SUCESSO! Seu mapa está online para todos.");
+            location.reload();
+        }
+
+        function carregarRank() {
+            db.ref('ranking').orderByChild('moedas').limitToLast(10).on('value', snap => {
+                let lista = [];
+                snap.forEach(c => { lista.push({n: c.key, m: c.val().moedas}); });
+                lista.reverse();
+                document.querySelector('#rank-table tbody').innerHTML = lista.map((p, i) => `<tr><td>#${i+1}</td><td>${p.n}</td><td style="color:var(--cyan)">💰 ${p.m}</td></tr>`).join('');
+            });
+        }
+
+        function carregarNiveis() {
+            db.ref('mapas').on('value', snap => {
+                const cont = document.getElementById('levels-container'); cont.innerHTML = '';
+                snap.forEach(m => {
+                    const btn = document.createElement('button');
+                    btn.className = "menu-button btn-purple";
+                    btn.innerText = "MUNDO DE: " + m.val().autor;
+                    btn.onclick = () => {
+                        abrirTela('editor'); document.getElementById('sidebar').classList.add('hidden');
+                        const cells = document.querySelectorAll('.cell');
+                        m.val().dados.forEach(d => { cells[d.id].className = d.cl; cells[d.id].innerText = d.h; });
+                    };
+                    cont.appendChild(btn);
+                });
+            });
+        }
+
+        function abrirAdmin() { if(prompt("Senha Admin:") === "123") document.getElementById('admin-panel').classList.remove('hidden'); }
+        function addMoedas(v) { moedas += v; updateUI(); }
+        function resetarServidor() { if(confirm("Apagar ranking global?")) db.ref('ranking').remove(); }
+
+        window.onload = updateUI;
+    </script>
+</body>
+</html>
