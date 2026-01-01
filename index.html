@@ -13,25 +13,47 @@
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
         .hidden { display: none !important; }
 
-        #header { background: #0a0a20; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
-        .badge-dono { background: var(--yellow); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; box-shadow: 0 0 10px var(--yellow); }
+        /* HEADER */
+        #header { background: #0a0a20; height: 50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
+        .badge-dono { background: var(--yellow); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
 
-        #main-content { height: calc(100vh - 120px); width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; }
+        /* AREAS PRINCIPAIS */
+        #main-content { height: calc(100vh - 180px); width: 100vw; overflow: hidden; position: relative; }
+        #chat-area { height: 130px; width: 100vw; background: #0a0a20; border-top: 2px solid #333; display: flex; flex-direction: column; }
+        
+        /* EDITOR E GRID */
+        #editor-ui { display: flex; width: 100%; height: 100%; }
+        #sidebar { width: 100px; background: #0a0a20; padding: 5px; display: flex; flex-direction: column; gap: 5px; border-right: 1px solid #333; overflow-y: auto; }
+        .tool { padding: 8px; background: #1a1a3a; border: 1px solid #444; font-size: 9px; text-align: center; border-radius: 5px; cursor: pointer; }
+        .tool.active { border-color: var(--cyan); background: #004455; }
+        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); background: #000; flex-grow: 1; overflow: auto; }
+        .cell { border: 0.1px solid #111; display: flex; align-items: center; justify-content: center; min-width: 35px; min-height: 35px; }
 
-        /* CHAT */
-        #chat-area { height: 120px; width: 100vw; background: #0a0a20; border-top: 2px solid #333; display: flex; flex-direction: column; }
-        #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 12px; }
-        #chat-input-box { display: flex; padding: 5px; gap: 5px; }
-        #chat-input { flex-grow: 1; background: #1a1a3a; border: 1px solid var(--cyan); color: white; border-radius: 5px; padding: 5px; }
-        .msg-dono { color: var(--yellow); font-weight: bold; text-shadow: 0 0 5px var(--yellow); }
+        /* JOGO */
+        #game-view { width: 100%; height: 100%; position: relative; background: #000; overflow: hidden; }
+        #player { position: absolute; width: 22px; height: 22px; background: var(--cyan); border-radius: 4px; z-index: 100; border: 2px solid white; box-shadow: 0 0 10px var(--cyan); }
+        .block-obj { position: absolute; width: 35px; height: 35px; }
+
+        /* BLOCOS */
+        .b-block { background: #555; }
+        .b-lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
+        .b-bomba { background: #333; border-radius: 50%; border: 2px solid #000; }
+        .b-bomba::after { content: '💣'; }
+        .b-flag { background: var(--yellow); border-radius: 2px; }
 
         /* BOTÕES */
-        .menu-button { width: 280px; padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin: 10px 0; }
+        .menu-button { width: 250px; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin: 8px 0; }
         .btn-cyan { background: var(--cyan); color: black; }
-        
-        /* ADMIN */
-        #admin-panel { position: fixed; top: 10%; left: 5%; width: 90%; max-height: 80%; background: #0a0a20; border: 3px solid var(--red); z-index: 5000; border-radius: 20px; padding: 15px; overflow-y: auto; }
-        input { width: 90%; padding: 10px; margin: 5px 0; border-radius: 5px; border: none; background: #000; color: white; }
+        .btn-purple { background: var(--purple); color: white; }
+
+        /* CHAT INTERNO */
+        #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 13px; }
+        #chat-input-box { display: flex; padding: 5px; gap: 5px; }
+        #chat-input { flex-grow: 1; background: #1a1a3a; border: 1px solid var(--cyan); color: white; border-radius: 5px; padding: 8px; }
+        .msg-dono { color: var(--yellow); font-weight: bold; }
+
+        #game-controls { position: absolute; bottom: 10px; width: 100%; display: flex; justify-content: space-around; z-index: 200; }
+        .ctrl-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -39,34 +61,25 @@
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); color:white; border:none; padding:8px; border-radius:5px;">PAINEL DONO</button>
+        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:5px; font-weight:bold;">DONO</button>
     </div>
 
-    <div id="main-content"></div>
+    <div id="main-content">
+        </div>
 
     <div id="chat-area">
         <div id="chat-msgs"></div>
         <div id="chat-input-box">
-            <input type="text" id="chat-input" placeholder="Conversar...">
-            <button onclick="enviarChat()" style="background:var(--cyan); border:none; border-radius:5px; padding:0 15px;">OK</button>
+            <input type="text" id="chat-input" placeholder="Diga algo...">
+            <button onclick="enviarChat()" style="background:var(--cyan); border:none; padding:0 15px; border-radius:5px; font-weight:bold;">OK</button>
         </div>
     </div>
 
-    <div id="admin-panel" class="hidden">
-        <h2 style="color:var(--red); text-align:center;">PAINEL DONO</h2>
-        <div style="background:#1a1a3a; padding:10px; border-radius:10px;">
-            <h4>MODO DEUS: <span id="status-god" style="color:red">OFF</span></h4>
-            <button onclick="toggleGodMode()" style="width:100%; padding:10px;">LIGAR/DESLIGAR</button>
-            <hr>
-            <input type="text" id="ban-nick" placeholder="Nick para Banir">
-            <input type="number" id="ban-horas" placeholder="Horas">
-            <button onclick="banirJogador()" style="width:100%; padding:10px; background:var(--red); color:white;">BANIR</button>
-            <hr>
-            <input type="text" id="pay-nick" placeholder="Nick do Jogador">
-            <input type="number" id="pay-valor" placeholder="Moedas">
-            <button onclick="enviarMoedas()" style="width:100%; padding:10px; background:var(--cyan);">DAR MOEDAS</button>
-        </div>
-        <button onclick="toggleAdmin()" style="width:100%; margin-top:10px; padding:10px;">FECHAR</button>
+    <div id="admin-panel" class="hidden" style="position:fixed; top:60px; left:50%; transform:translateX(-50%); background:#111; border:2px solid red; padding:15px; z-index:5000; width:80%; border-radius:10px;">
+        <h3 style="color:red; text-align:center">MODO DONO</h3>
+        <button onclick="moedas+=10000; syncUI();" style="width:100%; padding:10px;">+10.000 MOEDAS</button>
+        <button onclick="isGod=!isGod; alert('God:'+isGod)" style="width:100%; padding:10px; margin-top:5px;">TOGGLE GOD MODE</button>
+        <button onclick="toggleAdmin()" style="width:100%; margin-top:10px;">FECHAR</button>
     </div>
 
     <script>
@@ -80,12 +93,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let nick = localStorage.getItem('maker_nick') || prompt("Nick?");
+        let nick = localStorage.getItem('maker_nick') || prompt("Seu Nick:");
         if(!nick) nick = "Player" + Math.floor(Math.random()*99);
         localStorage.setItem('maker_nick', nick);
 
         let moedas = parseInt(localStorage.getItem('maker_moedas')) || 7475;
+        let toolAtual = 'block';
         let isGod = false;
+        let pX, pY, vX=0, vY=0, pulando=false, blocosFisica=[];
 
         function syncUI() {
             let isDono = nick.toLowerCase() === 'bolacha';
@@ -93,55 +108,134 @@
             document.getElementById('coins').innerText = moedas;
             if(isDono) document.getElementById('admin-btn').classList.remove('hidden');
             localStorage.setItem('maker_moedas', moedas);
-            db.ref('ranking/' + nick).set({moedas: moedas});
         }
 
-        // CHAT
+        const content = document.getElementById('main-content');
+
+        function telaMenu() {
+            content.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%">
+                    <h1 style="color:var(--cyan); font-size:35px">BOLACHA MAKER</h1>
+                    <button class="menu-button btn-cyan" onclick="telaEditor()">CRIAR MAPA</button>
+                    <button class="menu-button btn-purple" onclick="telaGaleria()">NÍVEIS ONLINE</button>
+                </div>
+            `;
+        }
+
+        function telaEditor() {
+            content.innerHTML = `
+                <div id="editor-ui">
+                    <div id="sidebar">
+                        <div class="tool active" onclick="setT(this,'block')">PEDRA</div>
+                        <div class="tool" onclick="setT(this,'lava')">LAVA</div>
+                        <div class="tool" onclick="setT(this,'bomba')">BOMBA</div>
+                        <div class="tool" onclick="setT(this,'spawn')">INÍCIO</div>
+                        <div class="tool" onclick="setT(this,'flag')">META</div>
+                        <div class="tool" onclick="setT(this,'sell')" style="color:red">APAGAR</div>
+                        <button onclick="postar()" style="background:#0f0; border:none; padding:10px; border-radius:5px; font-weight:bold; margin-top:10px;">POSTAR</button>
+                        <button onclick="telaMenu()" style="background:#444; color:white; border:none; padding:5px; border-radius:5px; margin-top:5px;">VOLTAR</button>
+                    </div>
+                    <div id="grid-canvas"></div>
+                </div>
+            `;
+            const g = document.getElementById('grid-canvas');
+            for(let i=0; i<300; i++) {
+                const c = document.createElement('div'); c.className = 'cell';
+                c.onclick = () => {
+                    if(toolAtual === 'sell') { c.className = 'cell'; c.innerText = ''; }
+                    else {
+                        if(moedas >= 5 || isGod) {
+                            if(!isGod) moedas -= 5;
+                            c.className = 'cell b-' + toolAtual;
+                            if(toolAtual === 'spawn') c.innerText = '👤';
+                            if(toolAtual === 'flag') c.innerText = '🚩';
+                            syncUI();
+                        }
+                    }
+                };
+                g.appendChild(c);
+            }
+        }
+
+        function telaGaleria() {
+            content.innerHTML = `<div style="padding:20px; text-align:center"><h2>MAPAS</h2><div id="map-list"></div><button onclick="telaMenu()">VOLTAR</button></div>`;
+            db.ref('mapas').limitToLast(10).once('value', snap => {
+                const list = document.getElementById('map-list');
+                snap.forEach(m => {
+                    const b = document.createElement('button');
+                    b.className = 'menu-button btn-purple';
+                    b.innerText = "MAPA DE " + m.val().autor;
+                    b.onclick = () => carregarFase(m.val().dados);
+                    list.appendChild(b);
+                });
+            });
+        }
+
+        function carregarFase(dados) {
+            content.innerHTML = `
+                <div id="game-view">
+                    <div id="player"></div>
+                    <div id="render"></div>
+                    <div id="game-controls">
+                        <button class="ctrl-btn" onmousedown="vX=-6" onmouseup="vX=0">◀</button>
+                        <button class="ctrl-btn" onclick="pular()">▲</button>
+                        <button class="ctrl-btn" onmousedown="vX=6" onmouseup="vX=0">▶</button>
+                    </div>
+                </div>
+            `;
+            const render = document.getElementById('render');
+            blocosFisica = [];
+            dados.forEach(d => {
+                const b = document.createElement('div');
+                b.className = 'block-obj ' + d.cl.replace('cell ', '');
+                let x = (d.id % 20) * 35; let y = Math.floor(d.id / 20) * 35;
+                b.style.left = x + 'px'; b.style.top = y + 'px';
+                render.appendChild(b);
+                if(d.cl.includes('spawn')) { pX = x; pY = y; }
+                blocosFisica.push({x, y, type: d.cl});
+            });
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            vY += 0.8; pY += vY; pX += vX;
+            blocosFisica.forEach(b => {
+                if (pX < b.x + 30 && pX + 22 > b.x && pY < b.y + 30 && pY + 22 > b.y) {
+                    if (b.type.includes('block')) { if(vY > 0) { pY = b.y - 22; vY = 0; pulando = false; } }
+                    if (b.type.includes('lava')) { telaMenu(); }
+                    if (b.type.includes('flag')) { alert("GANHOU!"); telaMenu(); }
+                }
+            });
+            const pl = document.getElementById('player');
+            if(pl) {
+                pl.style.left = pX + 'px'; pl.style.top = pY + 'px';
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function setT(el, t) { toolAtual = t; document.querySelectorAll('.tool').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+        function pular() { if(!pulando) { vY = -12; pulando = true; } }
+        function toggleAdmin() { document.getElementById('admin-panel').classList.toggle('hidden'); }
         function enviarChat() {
-            let txt = document.getElementById('chat-input').value;
-            if(!txt) return;
-            db.ref('chat').push({n: nick, t: txt, dono: (nick.toLowerCase()==='bolacha')});
+            let t = document.getElementById('chat-input').value; if(!t) return;
+            db.ref('chat').push({n: nick, t: t, d: nick.toLowerCase()==='bolacha'});
             document.getElementById('chat-input').value = '';
         }
 
-        db.ref('chat').limitToLast(15).on('value', snap => {
-            let div = document.getElementById('chat-msgs');
-            div.innerHTML = '';
+        db.ref('chat').limitToLast(10).on('value', snap => {
+            let div = document.getElementById('chat-msgs'); div.innerHTML = '';
             snap.forEach(m => {
-                let p = document.createElement('div');
-                let data = m.val();
-                p.innerHTML = `<span class="${data.dono?'msg-dono':''}">${data.n}</span>: ${data.t}`;
-                div.appendChild(p);
+                let d = m.val();
+                div.innerHTML += `<div><span class="${d.d?'msg-dono':''}">${d.n}</span>: ${d.t}</div>`;
             });
             div.scrollTop = div.scrollHeight;
         });
 
-        // ADMIN FUNCTIONS (Banir, God, Moedas)
-        function toggleAdmin() { document.getElementById('admin-panel').classList.toggle('hidden'); }
-        function toggleGodMode() { isGod = !isGod; document.getElementById('status-god').innerText = isGod ? "ON" : "OFF"; alert("Modo Deus: " + isGod); }
-        function banirJogador() {
-            let n = document.getElementById('ban-nick').value;
-            let h = document.getElementById('ban-horas').value;
-            db.ref('usuarios/' + n).update({ banUntil: Date.now() + (h * 3600000) });
-            alert("Banido!");
-        }
-        function enviarMoedas() {
-            let n = document.getElementById('pay-nick').value;
-            let v = parseInt(document.getElementById('pay-valor').value);
-            db.ref('ranking/' + n).once('value', s => {
-                let m = (s.val() ? s.val().moedas : 0) + v;
-                db.ref('ranking/' + n).update({moedas: m});
-                if(n === nick) { moedas = m; syncUI(); }
-                alert("Moedas enviadas!");
-            });
-        }
-
-        function telaMenu() {
-            document.getElementById('main-content').innerHTML = `
-                <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
-                <button class="menu-button btn-cyan" onclick="alert('Editor abrindo...')">CRIAR MAPA</button>
-                <button class="menu-button btn-cyan" onclick="alert('Em breve')">RANKING</button>
-            `;
+        function postar() {
+            let dados = [];
+            document.querySelectorAll('.cell').forEach((c, i) => { if(c.className !== 'cell') dados.push({id: i, cl: c.className}) });
+            db.ref('mapas').push({autor: nick, dados: dados});
+            alert("Postado!"); telaMenu();
         }
 
         syncUI();
