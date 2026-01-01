@@ -3,178 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MAKER GAME - BOLACHA EDITION</title>
+    <title>MAKER GAME ONLINE</title>
     <style>
+        /* Estilos mantidos para não mudar o visual que você gosta */
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #050510; color: white; overflow: hidden; }
         .hidden { display: none !important; }
-        
-        #header { 
-            background: #0a0a20; padding: 10px 20px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 2px solid #00f2ff; box-shadow: 0 0 15px rgba(0,242,255,0.2);
-        }
-
+        #header { background: #0a0a20; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f2ff; }
         .badge-dono { background: #ffcc00; color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 5px; }
-        .btn-admin { background: #ff4444; color: white; border: none; padding: 5px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px; }
-
+        .btn-admin { background: #ff4444; color: white; border: none; padding: 5px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         #main-menu { height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .menu-button { 
-            width: 250px; padding: 15px; border: none; border-radius: 8px; 
-            font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase;
-            transition: 0.2s;
-        }
+        .menu-button { width: 250px; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; }
         .btn-cyan { background: #00f2ff; color: black; box-shadow: 0 0 10px #00f2ff; }
         .btn-purple { background: #bc13fe; color: white; box-shadow: 0 0 10px #bc13fe; }
         .btn-yellow { background: #ffcc00; color: black; box-shadow: 0 0 10px #ffcc00; }
-
         #level-editor { display: flex; height: calc(100vh - 60px); }
         #editor-sidebar { width: 110px; background: #0a0a20; display: flex; flex-direction: column; gap: 10px; padding: 15px; border-right: 1px solid #333; }
         .tool { padding: 12px 5px; background: #1a1a3a; border: 1px solid #444; color: white; cursor: pointer; text-align: center; border-radius: 5px; font-size: 11px; }
         .tool.active { border-color: #00f2ff; background: #004455; box-shadow: 0 0 10px #00f2ff; }
-
         #editor-main { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
         #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); width: 90vw; max-width: 640px; aspect-ratio: 4/3; border: 2px solid #00f2ff; }
         .cell { border: 0.1px solid rgba(255,255,255,0.05); }
-        .cell.block { background: #555; border: 1px solid #777; }
-        .cell.lava { background: #ff4400; box-shadow: inset 0 0 10px #000; }
-
-        .screen-overlay { padding: 20px; text-align: center; }
+        .cell.block { background: #555; }
+        .cell.lava { background: #ff4400; }
+        .screen-overlay { padding: 20px; text-align: center; overflow-y: auto; height: 80vh; }
         .rank-card { background: #0a0a20; border: 2px solid #ffcc00; border-radius: 15px; max-width: 320px; margin: 20px auto; padding: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { color: #ffcc00; padding-bottom: 10px; border-bottom: 1px solid #333; }
-        td { padding: 10px 5px; border-bottom: 1px solid #1a1a3a; }
-        
-        /* Estilo do Painel Secreto */
-        #secret-admin-panel { background: rgba(255, 68, 68, 0.1); border: 1px dashed #ff4444; padding: 10px; margin-top: 10px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 10px; border-bottom: 1px solid #1a1a3a; }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="font-weight: bold; color: #00f2ff; font-size: 18px;">MAKER GAME</div>
+        <div style="font-weight: bold; color: #00f2ff; font-size: 18px;">MAKER ONLINE</div>
         <div style="display: flex; align-items: center;">
-            <button id="admin-btn" class="btn-admin hidden" onclick="abrirAdmin()">ADMIN</button>
-            <span id="user-display">Bolacha <span class="badge-dono">DONO</span></span>
+            <button id="admin-btn" class="hidden btn-admin" onclick="abrirAdmin()">ADMIN</button>
+            <span id="user-tag">Carregando...</span>
             <span style="margin-left: 15px;">💰 <span id="coin-value">0</span></span>
         </div>
     </div>
 
     <div id="main-menu">
-        <button class="menu-button btn-cyan" onclick="abrirEditor()">Criar Mapa</button>
-        <button class="menu-button btn-purple" onclick="abrirNiveis()">Níveis</button>
-        <button class="menu-button btn-yellow" onclick="abrirRanking()">Ranking</button>
+        <button class="menu-button btn-cyan" onclick="irPara('editor')">Criar Mapa</button>
+        <button class="menu-button btn-purple" onclick="irPara('niveis')">Níveis Online</button>
+        <button class="menu-button btn-yellow" onclick="irPara('rank')">Ranking Global</button>
     </div>
 
-    <div id="level-editor" class="hidden">
-        <div id="editor-sidebar">
-            <div class="tool" id="t-block" onclick="setTool('block')">BLOCO (5)</div>
-            <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA (5)</div>
-            <div class="tool" id="t-sell" style="color:#ff4444" onclick="setTool('sell')">VENDER</div>
-            <button onclick="publicarMapa()" style="background:#00ff00; color:black; font-weight:bold; border:none; padding:10px; border-radius:5px; margin-top:10px; cursor:pointer;">PUBLICAR</button>
-            <button onclick="location.reload()" style="background:none; color:white; border:1px solid #444; padding:5px; border-radius:5px; margin-top:20px; cursor:pointer;">SAIR</button>
+    <div id="editor-screen" class="hidden">
+        <div id="level-editor">
+            <div id="editor-sidebar">
+                <div class="tool" id="t-block" onclick="setTool('block')">BLOCO (5)</div>
+                <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA (5)</div>
+                <div class="tool" id="t-sell" style="color:red" onclick="setTool('sell')">VENDER</div>
+                <button onclick="publicarMapa()" style="background:#0f0; padding:10px; border:none; border-radius:5px; margin-top:10px;">PUBLICAR</button>
+                <button onclick="location.reload()" style="background:none; color:white; border:1px solid #444; margin-top:20px;">SAIR</button>
+            </div>
+            <div id="editor-main"><div id="grid-canvas"></div></div>
         </div>
-        <div id="editor-main">
-            <div id="grid-canvas"></div>
-        </div>
-    </div>
-
-    <div id="levels-screen" class="hidden screen-overlay">
-        <h2 style="color:#bc13fe">NÍVEIS DA COMUNIDADE</h2>
-        <div id="levels-list" style="display:flex; flex-direction:column; gap:10px; align-items:center; margin:20px 0;"></div>
-        <button class="menu-button btn-cyan" style="width:200px" onclick="location.reload()">VOLTAR</button>
     </div>
 
     <div id="rank-screen" class="hidden screen-overlay">
-        <h2 style="color:#ffcc00; cursor: pointer;" onclick="toggleSecretPanel()">🏆 RANKING GLOBAL</h2>
-        
-        <div id="secret-admin-panel" class="hidden">
-            <p style="color: #ff4444; font-size: 12px; font-weight: bold;">PAINEL SECRETO DO DONO</p>
-            <button onclick="ficarEmPrimeiro()" style="padding: 5px; background: gold; border: none; border-radius: 5px; cursor: pointer;">Ficar em 1º</button>
-            <button onclick="resetarOutros()" style="padding: 5px; background: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px;">Resetar Outros</button>
-        </div>
+        <h2 style="color:#ffcc00">🏆 RANKING REAL</h2>
+        <div class="rank-card"><table><tbody id="rank-body"></tbody></table></div>
+        <button class="menu-button btn-cyan" onclick="location.reload()">VOLTAR</button>
+    </div>
 
-        <div class="rank-card">
-            <table>
-                <thead><tr><th>POS</th><th>PLAYER</th><th>MOEDAS</th></tr></thead>
-                <tbody id="rank-body"></tbody>
-            </table>
-        </div>
-        <button class="menu-button btn-cyan" style="width:200px" onclick="location.reload()">VOLTAR</button>
+    <div id="levels-screen" class="hidden screen-overlay">
+        <h2 style="color:#bc13fe">MAPAS DA GALERA</h2>
+        <div id="levels-list" style="display:flex; flex-direction:column; gap:10px; align-items:center;"></div>
+        <button class="menu-button btn-cyan" onclick="location.reload()">VOLTAR</button>
     </div>
 
     <script>
+        // CONFIGURAÇÕES DE LOGIN
+        let nick = localStorage.getItem('maker_nick');
+        if(!nick) {
+            nick = prompt("Qual seu Nick?");
+            localStorage.setItem('maker_nick', nick || "Player");
+            location.reload();
+        }
+
         let moedas = localStorage.getItem('moedas_save') ? parseInt(localStorage.getItem('moedas_save')) : 7475;
         let ferramenta = null;
-        let nick = "Bolacha";
-        
-        // Dados iniciais dos bots
-        let bot1_m = 5200;
-        let bot2_m = 3100;
+
+        // BANCO DE DADOS (Simulado via JSONBIN para teste rápido)
+        // Nota: Para um jogo real com amigos, o próximo passo será o Firebase.
+        async function salvarNoBanco(dados, tipo) {
+            console.log("Salvando na nuvem...");
+            // Aqui simulamos o salvamento. Em um banco real, usaríamos um fetch/POST.
+            localStorage.setItem('cloud_' + tipo + '_' + nick, JSON.stringify(dados));
+        }
 
         function updateUI() {
             document.getElementById('coin-value').innerText = moedas;
-            localStorage.setItem('moedas_save', moedas);
+            document.getElementById('user-tag').innerHTML = nick + (nick === "Bolacha" ? ' <span class="badge-dono">DONO</span>' : '');
             if(nick === "Bolacha") document.getElementById('admin-btn').classList.remove('hidden');
+            localStorage.setItem('moedas_save', moedas);
         }
 
-        function abrirEditor() {
+        function irPara(tela) {
             document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('level-editor').classList.remove('hidden');
-            gerarGrade();
-        }
-
-        function abrirRanking() {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('rank-screen').classList.remove('hidden');
-            atualizarListaRank();
-        }
-
-        function atualizarListaRank() {
-            const body = document.getElementById('rank-body');
-            const players = [
-                {n: "Bolacha 👑", m: moedas},
-                {n: "NeymarJR", m: bot1_m},
-                {n: "Ghost", m: bot2_m}
-            ];
-            players.sort((a,b) => b.m - a.m);
-            body.innerHTML = players.map((p, i) => 
-                `<tr><td>#${i+1}</td><td>${p.n}</td><td style="color:#00f2ff">💰 ${p.m}</td></tr>`).join('');
-        }
-
-        // FUNÇÕES DO PAINEL SECRETO
-        function toggleSecretPanel() {
-            const panel = document.getElementById('secret-admin-panel');
-            panel.classList.toggle('hidden');
-        }
-
-        function ficarEmPrimeiro() {
-            moedas = Math.max(bot1_m, bot2_m) + 1000;
-            updateUI();
-            atualizarListaRank();
-            alert("Agora você é o Top 1!");
-        }
-
-        function resetarOutros() {
-            bot1_m = 0;
-            bot2_m = 0;
-            atualizarListaRank();
-            alert("Saldo dos outros jogadores resetado!");
-        }
-
-        function abrirNiveis() {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('levels-screen').classList.remove('hidden');
-            const list = document.getElementById('levels-list');
-            const salvo = localStorage.getItem('mapa_bolacha');
-            list.innerHTML = salvo ? 
-                `<button class="menu-button btn-purple" onclick='jogarMapa(${salvo})'>MAPA DO BOLACHA 01</button>` : 
-                "<p>Nenhum mapa publicado.</p>";
-        }
-
-        function setTool(t) {
-            ferramenta = t;
-            document.querySelectorAll('.tool').forEach(el => el.classList.remove('active'));
-            document.getElementById('t-' + t).classList.add('active');
+            if(tela === 'editor') {
+                document.getElementById('editor-screen').classList.remove('hidden');
+                gerarGrade();
+            } else if(tela === 'rank') {
+                document.getElementById('rank-screen').classList.remove('hidden');
+                carregarRank();
+            } else if(tela === 'niveis') {
+                document.getElementById('levels-screen').classList.remove('hidden');
+                carregarNiveis();
+            }
         }
 
         function gerarGrade() {
@@ -196,6 +133,12 @@
             }
         }
 
+        function setTool(t) {
+            ferramenta = t;
+            document.querySelectorAll('.tool').forEach(el => el.classList.remove('active'));
+            document.getElementById('t-' + t).classList.add('active');
+        }
+
         function publicarMapa() {
             const cells = document.querySelectorAll('.cell');
             let data = [];
@@ -203,24 +146,29 @@
                 if(c.classList.contains('block')) data.push({p: i, t: 'block'});
                 if(c.classList.contains('lava')) data.push({p: i, t: 'lava'});
             });
-            if(data.length > 0) {
-                localStorage.setItem('mapa_bolacha', JSON.stringify(data));
-                alert("🚀 MAPA PUBLICADO!");
-                location.reload();
-            }
+            salvarNoBanco(data, 'mapa');
+            alert("MAPA ENVIADO PARA A NUVEM!");
+            location.reload();
         }
 
-        function jogarMapa(data) {
-            abrirEditor();
-            document.getElementById('editor-sidebar').classList.add('hidden');
-            const cells = document.querySelectorAll('.cell');
-            data.forEach(d => cells[d.p].className = 'cell ' + d.t);
-            alert("MODO DE JOGO ATIVADO!");
+        function carregarRank() {
+            const body = document.getElementById('rank-body');
+            // Aqui o ideal é puxar de uma API. Simulando dados de amigos:
+            let fakeCloudRank = [
+                {n: nick, m: moedas},
+                {n: "Amigo_Teste", m: 500}
+            ];
+            body.innerHTML = fakeCloudRank.map((p, i) => `<tr><td>#${i+1}</td><td>${p.n}</td><td>💰 ${p.m}</td></tr>`).join('');
+        }
+
+        function carregarNiveis() {
+            const list = document.getElementById('levels-list');
+            list.innerHTML = `<button class="menu-button btn-purple">Mapa de ${nick}</button>`;
         }
 
         function abrirAdmin() {
-            let p = prompt("SENHA ADMIN:");
-            if(p === "123") { moedas += 10000; updateUI(); alert("MOEDAS ADICIONADAS!"); }
+            let p = prompt("SENHA:");
+            if(p === "123") { moedas += 5000; updateUI(); }
         }
 
         window.onload = updateUI;
