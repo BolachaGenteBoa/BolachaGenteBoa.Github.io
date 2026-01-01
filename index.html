@@ -3,55 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MAKER GAME</title>
+    <title>MAKER GAME - 2026</title>
     <style>
-        /* CSS INTEGRADO */
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #050510; color: white; overflow: hidden; }
+        body { margin: 0; font-family: sans-serif; background: #050510; color: white; overflow: hidden; }
         .hidden { display: none !important; }
-        
         #header { background: #0a0a20; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f2ff; }
-        .badge-dono { background: gold; color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
-        
-        #main-menu { height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .menu-button { width: 250px; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #00f2ff; color: black; font-size: 16px; }
-
-        #level-editor { display: grid; grid-template-columns: 100px 1fr; height: calc(100vh - 60px); }
-        #editor-sidebar { background: #0a0a20; display: flex; flex-direction: column; gap: 10px; padding: 10px; border-right: 1px solid #333; }
-        .tool { padding: 10px; background: #1a1a3a; border: 1px solid #444; color: white; cursor: pointer; font-size: 10px; text-align: center; border-radius: 4px; }
-        .tool.active { border-color: #00f2ff; background: #004455; }
-
+        .badge-dono { background: gold; color: black; padding: 2px 5px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        #main-menu { height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .btn { width: 200px; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: #00f2ff; color: #000; }
         #grid-canvas { 
-            display: grid; 
-            grid-template-columns: repeat(20, 1fr); 
-            grid-template-rows: repeat(15, 1fr); 
-            background: #000; 
-            position: relative;
-            width: 640px; height: 480px;
-            margin: auto; border: 2px solid #00f2ff;
+            display: grid; grid-template-columns: repeat(20, 1fr); 
+            width: 90vw; height: 60vh; margin: 20px auto; 
+            background: #000; border: 1px solid #00f2ff; 
         }
-        .cell { border: 0.1px solid rgba(255,255,255,0.05); box-sizing: border-box; }
-        .cell.block { background: #555; border: 1px solid #888; }
-        .cell.lava { background: #ff4400; box-shadow: inset 0 0 10px #000; }
+        .cell { border: 0.1px solid rgba(255,255,255,0.1); box-sizing: border-box; min-height: 20px; }
+        .cell.block { background: #555; }
+        .cell.lava { background: #ff4400; }
         .cell.spawn { background: #00ff00; opacity: 0.5; }
-        .cell.flag { background: #ffff00; clip-path: polygon(20% 0%, 100% 50%, 20% 100%); }
-
-        #nick-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 100; }
-        .modal-content { background: #1a1a3a; padding: 30px; border-radius: 15px; border: 2px solid #00f2ff; text-align: center; }
-        input { padding: 10px; border-radius: 5px; border: none; margin-bottom: 15px; width: 80%; }
-        
-        #rank-tab { padding: 20px; }
-        .rank-item { background: #1a1a3a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; border-left: 4px solid #00f2ff; }
+        .cell.flag { background: #ffff00; }
+        #editor-sidebar { display: flex; justify-content: center; gap: 5px; padding: 10px; flex-wrap: wrap; }
+        .tool { padding: 8px; background: #1a1a3a; border: 1px solid #444; color: white; cursor: pointer; font-size: 12px; }
+        .tool.active { border-color: #00f2ff; background: #004455; }
+        #nick-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: #1a1a3a; padding: 25px; border-radius: 10px; text-align: center; border: 1px solid #00f2ff; }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <h2 style="color:#00f2ff; margin:0;">MAKER GAME</h2>
-        <div id="user-info">
-            <span id="user-name">...</span>
-            <span style="margin-left:15px;">💰 <span id="coin-value">0</span></span>
+        <div style="color:#00f2ff; font-weight:bold;">MAKER GAME</div>
+        <div>
+            <span id="user-name">...</span> | 💰 <span id="coin-value">0</span>
         </div>
     </div>
 
     <div id="main-menu">
-        <button class="
+        <button class="btn" id="btn-create">CRIAR MAPA</button>
+        <button class="btn" id="btn-rank" style="background: #ffcc00;">RANKING</button>
+    </div>
+
+    <div id="level-editor" class="hidden">
+        <div id="editor-sidebar">
+            <div class="tool" data-type="block">BLOCO (5)</div>
+            <div class="tool" data-type="lava">LAVA (5)</div>
+            <div class="tool" data-type="spawn">INÍCIO</div>
+            <div class="tool" data-type="flag">META</div>
+            <div class="tool" data-type="sell" style="color:red">VENDER</div>
+            <button id="btn-exit" style="background:red; color:white; border:none; padding:5px 10px; border-radius:3px;">SAIR</button>
+        </div>
+        <div id="grid-canvas"></div>
+    </div>
+
+    <div id="rank-tab" class="hidden" style="padding:20px;">
+        <button class="btn" id="btn-back" style="width:80px">VOLTAR</button>
+        <h3>TOP RICOS</h3>
+        <div id="rank-list"></div>
+    </div>
+
+    <div id="nick-modal" class="hidden">
+        <div class="modal-content">
+            <h3>NICKNAME</h3>
+            <input type="text" id="nick-input" style="padding:8px; width:80%"><br><br>
+            <button class="btn" id="btn-save-nick">ENTRAR</button>
+        </div>
+    </div>
+
+    <script>
+        // JAVASCRIPT INTEGRADO - SEM ERRO DE CARREGAMENTO
+        let coins = localStorage.getItem('coins') ? parseInt(localStorage.getItem('coins')) : 500;
+        let nickname = localStorage.getItem('nickname') || "";
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [{name: "Bolacha", coins: 9999}];
+        let tool = null;
+
+        const screens = {
+            menu: document.getElementById('main-menu'),
+            rank: document.getElementById('rank-tab'),
+            editor: document.getElementById('level-editor')
+        };
+
+        function showScreen(target) {
+            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            target.classList.remove('hidden');
+        }
+
+        function updateUI() {
+            document.getElementById('coin-value').innerText = coins;
+            const nameDisplay = document.getElementById('user-name');
+            nameDisplay.innerHTML = nickname || "...";
+            if(nickname === "Bolacha") nameDisplay.innerHTML += ' <span class="badge-dono">DONO</span>';
+            localStorage.setItem('coins', coins);
+        }
+
+        function initGrid() {
+            const canvas = document.getElementById('grid-canvas');
+            canvas.innerHTML = '';
+            for (let i = 0; i < 300; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => {
+                    let cost = (tool === 'block' || tool === 'lava') ? 5 : 0;
+                    if (tool === 'sell') {
+                        if (cell.classList.contains('block') || cell.classList.contains('lava')) {
+                            coins += 5; cell.className = 'cell';
+                        }
+                    } else if (tool && coins >= cost) {
+                        if (tool === 'spawn' || tool === 'flag') {
+                            const old = document.querySelector('.' + tool);
+                            if(old) old.classList.remove(tool);
+                        }
+                        if(!cell.classList.contains(tool)) {
+                            cell.className = 'cell ' + tool;
+                            coins -= cost;
+                        }
+                    }
+                    updateUI();
+                };
+                canvas.appendChild(cell);
+            }
+        }
+
+        window.onload = () => {
+            if(!nickname) document.getElementById('nick-modal').classList.remove('hidden');
+            updateUI();
+
+            document.getElementById('btn-create').onclick = () => { initGrid(); showScreen(screens.editor); };
+            document.getElementById('btn-exit').onclick = () => showScreen(screens.menu);
+            document.getElementById('btn-back').onclick = () => showScreen(screens.menu);
+
+            document.getElementById('btn-rank').onclick = () => {
+                const list = document.getElementById('rank-list');
+                list.innerHTML = leaderboard.sort((a,b)=>b.coins-a.coins).slice(0,5).map((u,i)=>`
+                    <div style="padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
+                        <span>#${i+1} ${u.name}</span> <span>💰 ${u.coins}</span>
+                    </div>`).join('');
+                showScreen(screens.rank);
+            };
+
+            document.querySelectorAll('.tool').forEach(t => {
+                t.onclick = () => {
+                    document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
+                    t.classList.add('active');
+                    tool = t.dataset.type;
+                };
+            });
+
+            document.getElementById('btn-save-nick').onclick = () => {
+                const val = document.getElementById('nick-input').value.trim();
+                if(val.length >= 2) {
+                    nickname = val;
+                    localStorage.setItem('nickname', nickname);
+                    document.getElementById('nick-modal').classList.add('hidden');
+                    updateUI();
+                }
+            };
+        };
+    </script>
+</body>
+</html>
