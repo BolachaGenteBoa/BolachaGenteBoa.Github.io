@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - FULL EDITION</title>
+    <title>BOLACHA MAKER SUPREMO - V5</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -14,49 +14,59 @@
         .hidden { display: none !important; }
 
         /* HEADER */
-        #header { background: #0a0a20; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
-        .badge-dono { background: var(--yellow); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
-        .badge-mod { background: var(--blue); color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
+        #header { background: #0a0a20; height: 65px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); box-shadow: 0 0 15px rgba(0,242,255,0.2); z-index: 1000; position: relative; }
+        .badge-dono { background: var(--yellow); color: black; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 5px; box-shadow: 0 0 10px var(--yellow); }
+        .badge-mod { background: var(--blue); color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 5px; box-shadow: 0 0 10px var(--blue); }
 
-        /* UI */
-        #main-content { height: calc(100vh - 60px); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .menu-card { background: rgba(13, 13, 37, 0.95); padding: 30px; border-radius: 20px; border: 2px solid var(--purple); text-align: center; width: 90%; max-width: 400px; }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        /* UI CENTRAL */
+        #main-content { height: calc(100vh - 65px); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .menu-card { background: rgba(13, 13, 37, 0.98); padding: 30px; border-radius: 25px; border: 2px solid var(--purple); text-align: center; width: 95%; max-width: 500px; box-shadow: 0 0 30px rgba(188, 19, 254, 0.3); }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; transition: 0.3s; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
+        .btn-red { background: var(--red); color: white; }
+
+        /* RANKING ESTILIZADO */
+        #rank-container { width: 100%; max-height: 350px; overflow-y: auto; margin: 15px 0; padding-right: 5px; }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 10px; border-left: 4px solid transparent; }
+        .rank-item.is-me { border-left-color: var(--cyan); background: rgba(0, 242, 255, 0.1); }
+        .rank-item.is-dono { border-left-color: var(--yellow); }
 
         /* EDITOR */
-        #editor-container { display: grid; grid-template-columns: repeat(40, 35px); grid-template-rows: repeat(20, 35px); background: #111; border: 1px solid #333; overflow: auto; width: 100%; height: 70vh; }
-        .cell { width: 35px; height: 35px; border: 0.1px solid rgba(255,255,255,0.05); box-sizing: border-box; }
-        .cell:hover { background: rgba(255,255,255,0.1); }
+        #editor-wrapper { display: flex; flex-direction: column; width: 100%; height: calc(100vh - 65px); background: #000; }
+        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background-image: linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px); background-size: 40px 40px; overflow: auto; flex-grow: 1; cursor: crosshair; }
+        .cell { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.02); }
+        .cell.block { background: #555 !important; border: 2px solid #333; }
+        .cell.lava { background: var(--red) !important; box-shadow: inset 0 0 10px #000; }
+        .cell.spawn { background: var(--cyan) !important; }
+        .cell.flag { background: var(--yellow) !important; border-radius: 50% 50% 0 0; }
         
-        /* TILES */
-        .spawn { background: var(--cyan) !important; box-shadow: inset 0 0 10px #000; }
-        .block { background: #444 !important; border: 1px solid #222; }
-        .lava { background: var(--red) !important; }
-        .flag { background: var(--yellow) !important; border-radius: 50% 50% 0 0; }
+        #editor-bar { height: 90px; background: #0a0a20; border-top: 2px solid var(--purple); display: flex; align-items: center; justify-content: center; gap: 15px; padding: 10px; }
+        .tool { width: 45px; height: 45px; border: 2px solid white; border-radius: 8px; cursor: pointer; }
+        .tool.active { transform: scale(1.2); border-color: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
 
-        /* JOGO */
+        /* GAME */
         #game-view { width: 100%; height: 100%; position: relative; background: #000; overflow: hidden; }
-        #player { position: absolute; width: 28px; height: 28px; background: var(--cyan); border: 2px solid white; border-radius: 5px; z-index: 100; box-shadow: 0 0 15px var(--cyan); }
-        .obj { position: absolute; width: 35px; height: 35px; }
+        #world { position: absolute; }
+        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid white; border-radius: 6px; z-index: 100; box-shadow: 0 0 20px var(--cyan); }
+        .obj { position: absolute; width: 40px; height: 40px; }
 
-        /* CONTROLES */
+        /* MOBILE */
         #mobile-controls { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; z-index: 2000; pointer-events: none; }
-        .ctrl-btn { width: 70px; height: 70px; background: rgba(255,255,255,0.1); border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 25px; pointer-events: auto; }
-
-        #editor-footer { height: 120px; background: #0a0a20; display: flex; align-items: center; justify-content: space-around; padding: 10px; }
-        .tool { width: 50px; height: 50px; border: 2px solid white; border-radius: 8px; cursor: pointer; }
+        .ctrl-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.1); border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; pointer-events: auto; }
     </style>
 </head>
 <body>
 
-    <div id="ban-screen" class="hidden" style="position:fixed; inset:0; background:#000; color:red; z-index:10000; display:flex; align-items:center; justify-content:center;"><h1>🚫 VOCÊ FOI BANIDO</h1></div>
+    <div id="ban-screen" class="hidden" style="position:fixed; inset:0; background:#000; color:red; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <h1>🚫 ACESSO BLOQUEADO</h1>
+        <p>Você foi banido desta instância.</p>
+    </div>
 
     <div id="header">
         <div id="display-nick">...</div>
-        <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); border:none; color:white; padding:8px 15px; border-radius:5px; cursor:pointer;">PAINEL</button>
+        <div style="font-size: 20px; color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
+        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); border:none; color:white; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">ADM</button>
     </div>
 
     <div id="main-content"></div>
@@ -69,14 +79,16 @@
         <div class="ctrl-btn" ontouchstart="keys['Space']=true" ontouchend="keys['Space']=false">▲</div>
     </div>
 
-    <div id="admin-panel" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; padding:40px;">
-        <h2>PAINEL SUPREMO</h2>
-        <input type="text" id="target-nick" placeholder="Nick Alvo" style="width:100%; padding:10px; margin:10px 0;">
-        <input type="number" id="target-val" placeholder="Valor/Horas" style="width:100%; padding:10px; margin:10px 0;">
-        <button onclick="admMoedas()" class="btn btn-cyan">Dar Moedas</button>
-        <button onclick="admAdmin()" class="btn btn-purple" style="background:var(--blue)">Dar Admin (Horas)</button>
-        <button onclick="admBan()" class="btn btn-red">Banir + Deletar Ranking</button>
-        <button onclick="toggleAdmin()" class="btn" style="background:#fff">Voltar</button>
+    <div id="admin-panel" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:9999; padding:40px; overflow-y:auto;">
+        <div class="menu-card" style="margin: 0 auto;">
+            <h2 style="color:var(--red)">OVERLORD PANEL</h2>
+            <input type="text" id="target-nick" placeholder="Nick Alvo" style="width:100%; padding:12px; margin:5px 0;">
+            <input type="number" id="target-val" placeholder="Valor/Horas" style="width:100%; padding:12px; margin:5px 0;">
+            <button onclick="admMoedas()" class="btn btn-cyan">DAR MOEDAS</button>
+            <button onclick="admAdmin()" class="btn btn-purple">DAR ADMIN TEMP</button>
+            <button onclick="admBan()" class="btn btn-red">BANIR JOGADOR</button>
+            <button onclick="toggleAdmin()" class="btn" style="background:#fff">FECHAR</button>
+        </div>
     </div>
 
     <script>
@@ -98,80 +110,122 @@
         let keys = {};
         let currentTool = 'block';
         let pX, pY, vX=0, vY=0, noChao=false, blocosAtuais=[];
+        let gameActive = false;
 
         window.onkeydown = (e) => keys[e.code] = true;
         window.onkeyup = (e) => keys[e.code] = false;
 
         function checkUser() {
             db.ref('bans/' + nick).on('value', s => { if(s.val() === true) document.getElementById('ban-screen').classList.remove('hidden'); });
+            
+            // Forçar criação de entrada no ranking para aparecer no rank
+            db.ref('ranking/' + nick).on('value', s => {
+                if(!s.exists()) {
+                    db.ref('ranking/' + nick).set({ moedas: 500 });
+                } else {
+                    moedas = s.val().moedas;
+                    document.getElementById('coins').innerText = moedas;
+                }
+            });
+
             db.ref('admins/' + nick).on('value', s => {
                 let isD = (nick.toLowerCase() === 'bolacha');
                 let isM = s.val() && Date.now() < s.val().expires;
                 document.getElementById('display-nick').innerHTML = nick + (isD ? '<span class="badge-dono">DONO</span>' : (isM ? '<span class="badge-mod">MOD</span>' : ''));
                 if(isD || isM) document.getElementById('admin-btn').classList.remove('hidden');
             });
-            db.ref('ranking/' + nick).on('value', s => {
-                moedas = s.val() ? s.val().moedas : 500;
-                document.getElementById('coins').innerText = moedas;
-            });
         }
 
         function telaMenu() {
+            gameActive = false;
             document.getElementById('mobile-controls').classList.add('hidden');
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
                     <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
-                    <button class="btn btn-cyan" onclick="telaGaleria()">Jogar Níveis</button>
-                    <button class="btn btn-purple" onclick="telaEditor()">Criar Mapa</button>
-                    <button class="btn" style="background:#555; color:white;" onclick="telaRanking()">Ranking</button>
+                    <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR</button>
+                    <button class="btn btn-purple" onclick="telaEditor()">CRIAR MAPA</button>
+                    <button class="btn" style="background:#444; color:white;" onclick="telaRanking()">RANKING</button>
                 </div>
             `;
         }
 
-        // --- EDITOR DE MAPAS ---
+        function telaRanking() {
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>🏆 RANKING</h2><div id="rank-container">Carregando jogadores...</div><button onclick="telaMenu()" class="btn btn-cyan">VOLTAR</button></div>`;
+            
+            db.ref('admins').once('value', admSnap => {
+                const adms = admSnap.val() || {};
+                // Puxamos todos os dados para garantir que ninguém suma
+                db.ref('ranking').once('value', s => {
+                    let items = [];
+                    s.forEach(c => { items.push({n: c.key, m: c.val().moedas}); });
+                    
+                    // Ordenar manualmente por moedas
+                    items.sort((a, b) => b.m - a.m);
+                    
+                    let html = "";
+                    items.forEach((u, i) => {
+                        let isD = (u.n.toLowerCase() === 'bolacha');
+                        let isM = adms[u.n] && Date.now() < adms[u.n].expires;
+                        let tag = isD ? '<span class="badge-dono">DONO</span>' : (isM ? '<span class="badge-mod">MOD</span>' : '');
+                        let meClass = (u.n === nick) ? 'is-me' : '';
+                        let donoClass = isD ? 'is-dono' : '';
+                        
+                        html += `<div class="rank-item ${meClass} ${donoClass}">
+                                    <span>#${i+1} <b>${u.n}</b> ${tag}</span>
+                                    <span style="color:var(--yellow)">💰 ${u.m}</span>
+                                 </div>`;
+                    });
+                    document.getElementById('rank-container').innerHTML = html || "Nenhum jogador encontrado.";
+                });
+            });
+        }
+
         function telaEditor() {
             document.getElementById('main-content').innerHTML = `
-                <div id="editor-container"></div>
-                <div id="editor-footer">
-                    <div class="tool block" onclick="currentTool='block'"></div>
-                    <div class="tool lava" onclick="currentTool='lava'"></div>
-                    <div class="tool spawn" onclick="currentTool='spawn'"></div>
-                    <div class="tool flag" onclick="currentTool='flag'"></div>
-                    <div class="tool" style="background:#000;" onclick="currentTool='erase'">❌</div>
-                    <button onclick="salvarMapa()" class="btn-cyan" style="padding:10px; border-radius:5px;">SALVAR</button>
-                    <button onclick="telaMenu()" class="btn-red" style="padding:10px; border-radius:5px;">SAIR</button>
+                <div id="editor-wrapper">
+                    <div id="editor-grid"></div>
+                    <div id="editor-bar">
+                        <div class="tool block active" id="t-block" onclick="setTool('block')"></div>
+                        <div class="tool lava" id="t-lava" onclick="setTool('lava')"></div>
+                        <div class="tool spawn" id="t-spawn" onclick="setTool('spawn')"></div>
+                        <div class="tool flag" id="t-flag" onclick="setTool('flag')"></div>
+                        <div class="tool" style="background:#000; color:red; font-weight:bold; text-align:center; line-height:45px;" onclick="setTool('erase')">X</div>
+                        <button onclick="salvarMapa()" class="btn btn-cyan" style="width:100px; margin:0; padding:10px;">SALVAR</button>
+                        <button onclick="telaMenu()" class="btn btn-red" style="width:80px; margin:0; padding:10px;">SAIR</button>
+                    </div>
                 </div>
             `;
-            const grid = document.getElementById('editor-container');
-            for(let i=0; i<800; i++) {
+            const grid = document.getElementById('editor-grid');
+            for(let i=0; i<1800; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                cell.onclick = () => {
-                    cell.className = 'cell ' + (currentTool === 'erase' ? '' : currentTool);
-                };
+                cell.onmousedown = (e) => { if(e.buttons === 1) cell.className = 'cell ' + (currentTool === 'erase' ? '' : currentTool); };
+                cell.onmouseenter = (e) => { if(e.buttons === 1) cell.className = 'cell ' + (currentTool === 'erase' ? '' : currentTool); };
                 grid.appendChild(cell);
             }
         }
 
+        function setTool(t) {
+            currentTool = t;
+            document.querySelectorAll('.tool').forEach(el => el.classList.remove('active'));
+            if(t !== 'erase') document.getElementById('t-'+t).classList.add('active');
+        }
+
         function salvarMapa() {
             let dados = [];
-            document.querySelectorAll('.cell').forEach((c, i) => {
-                if(c.classList.length > 1) dados.push({id: i, cl: c.className});
-            });
-            if(dados.length < 2) return alert("Mapa muito vazio!");
+            document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) dados.push({id: i, cl: c.className}); });
+            if(dados.length < 2) return alert("Coloque pelo menos o Spawn e a Bandeira!");
             db.ref('mapas').push({autor: nick, dados: dados});
-            alert("Mapa Publicado com Sucesso!");
+            alert("Mapa Publicado!");
             telaMenu();
         }
 
-        // --- JOGO ---
         function telaGaleria() {
-            document.getElementById('main-content').innerHTML = `<h2>MUNDO DOS PLAYERS</h2><div id="m-list" style="overflow-y:auto; height:60vh;"></div><button onclick="telaMenu()" class="btn btn-cyan">Voltar</button>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>MAPAS</h2><div id="m-list" style="max-height:300px; overflow-y:auto;"></div><button onclick="telaMenu()" class="btn btn-red">VOLTAR</button></div>`;
             db.ref('mapas').once('value', s => {
                 s.forEach(m => {
-                    let b = document.createElement('button');
-                    b.className = "btn btn-purple";
-                    b.innerText = "MAPA DE: " + m.val().autor;
+                    let b = document.createElement('button'); b.className = "btn btn-purple";
+                    b.innerText = "NÍVEL DE: " + m.val().autor;
                     b.onclick = () => iniciarJogo(m.val().dados);
                     document.getElementById('m-list').appendChild(b);
                 });
@@ -179,69 +233,65 @@
         }
 
         function iniciarJogo(dados) {
+            gameActive = true;
             document.getElementById('mobile-controls').classList.remove('hidden');
-            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="player"></div><div id="objs"></div></div>`;
+            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
             blocosAtuais = [];
             dados.forEach(d => {
                 const o = document.createElement('div');
                 o.className = 'obj ' + d.cl.replace('cell ', '');
-                let x = (d.id % 40) * 35; let y = Math.floor(d.id / 40) * 35;
+                let x = (d.id % 60) * 40; let y = Math.floor(d.id / 60) * 40;
                 o.style.left = x + 'px'; o.style.top = y + 'px';
                 document.getElementById('objs').appendChild(o);
                 if(d.cl.includes('spawn')) { pX = x; pY = y; vX=0; vY=0; }
                 blocosAtuais.push({x, y, type: d.cl});
             });
-            loop();
+            requestAnimationFrame(loop);
         }
 
         function loop() {
-            if(!document.getElementById('player')) return;
-            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6; else if(keys['KeyD'] || keys['ArrowRight']) vX = 6; else vX *= 0.8;
-            if((keys['Space'] || keys['KeyW'] || keys['ArrowUp']) && noChao) { vY = -14; noChao = false; }
+            if(!gameActive || !document.getElementById('player')) return;
+            if(keys['KeyA'] || keys['ArrowLeft']) vX = -7; else if(keys['KeyD'] || keys['ArrowRight']) vX = 7; else vX *= 0.8;
+            if((keys['Space'] || keys['KeyW'] || keys['ArrowUp']) && noChao) { vY = -15; noChao = false; }
             vY += 0.8; pX += vX; pY += vY; noChao = false;
+
             blocosAtuais.forEach(b => {
-                if(pX < b.x + 32 && pX + 26 > b.x && pY < b.y + 32 && pY + 26 > b.y) {
-                    if(b.type.includes('block')) { if(vY > 0) { pY = b.y - 28; vY = 0; noChao = true; } }
-                    if(b.type.includes('lava')) { pX = 0; pY = 0; telaMenu(); alert("LAVA!"); }
-                    if(b.type.includes('flag')) { db.ref('ranking/'+nick).set({moedas: moedas + 100}); alert("VENCEU! +100 Moedas"); telaMenu(); }
+                if(pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
+                    if(b.type.includes('block')) { if(vY > 0) { pY = b.y - 30; vY = 0; noChao = true; } }
+                    if(b.type.includes('lava')) { gameActive = false; alert("MORREU!"); telaMenu(); }
+                    if(b.type.includes('flag')) { gameActive = false; db.ref('ranking/'+nick).update({moedas: moedas + 100}); alert("VENCEU! +100 Moedas"); telaMenu(); }
                 }
             });
+
+            let camX = -pX + window.innerWidth/2 - 20;
+            let camY = -pY + window.innerHeight/2 - 20;
+            document.getElementById('world').style.transform = `translate(${camX}px, ${camY}px)`;
             document.getElementById('player').style.left = pX + 'px';
             document.getElementById('player').style.top = pY + 'px';
             requestAnimationFrame(loop);
         }
 
-        // --- ADMIN ---
+        // ADMIN
         function toggleAdmin() { document.getElementById('admin-panel').classList.toggle('hidden'); }
         function admMoedas() {
             let t = document.getElementById('target-nick').value;
             let v = parseInt(document.getElementById('target-val').value);
             db.ref('ranking/'+t).once('value', s => {
-                db.ref('ranking/'+t).set({moedas: (s.val()?s.val().moedas:0) + v});
-                alert("Moedas Enviadas!");
+                db.ref('ranking/'+t).update({moedas: (s.val()?s.val().moedas:0) + v});
+                alert("Moedas atualizadas!");
             });
         }
         function admAdmin() {
             let t = document.getElementById('target-nick').value;
             let h = parseFloat(document.getElementById('target-val').value);
             db.ref('admins/'+t).set({expires: Date.now() + (h*3600000)});
-            alert("Admin Temporário Ativado!");
+            alert("Admin temporário enviado!");
         }
         function admBan() {
             let t = document.getElementById('target-nick').value;
             db.ref('bans/'+t).set(true);
             db.ref('ranking/'+t).remove();
-            alert("EXPULSO!");
-        }
-
-        function telaRanking() {
-            document.getElementById('main-content').innerHTML = `<h2>🏆 RANKING</h2><div id="list" style="width:100%"></div><button onclick="telaMenu()" class="btn btn-cyan">Voltar</button>`;
-            db.ref('ranking').orderByChild('moedas').limitToLast(10).once('value', s => {
-                let p = []; s.forEach(c => p.push({n:c.key, m:c.val().moedas}));
-                p.reverse().forEach((u, i) => {
-                    document.getElementById('list').innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222;"><span>#${i+1} ${u.n}</span><span>💰 ${u.m}</span></div>`;
-                });
-            });
+            alert("BANIDO!");
         }
 
         checkUser();
