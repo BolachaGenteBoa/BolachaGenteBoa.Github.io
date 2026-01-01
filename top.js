@@ -1,4 +1,4 @@
-// CONFIGURAÇÕES DE TELAS
+// 1. MAPEAMENTO DE TELAS
 const screens = { 
     menu: document.getElementById('main-menu'), 
     comm: document.getElementById('community-tab'), 
@@ -7,13 +7,13 @@ const screens = {
 };
 const mobileControls = document.getElementById('mobile-controls');
 
-// DADOS LOCAIS
+// 2. BANCO DE DADOS LOCAL
 let coins = localStorage.getItem('coins') ? parseInt(localStorage.getItem('coins')) : 500;
 let nickname = localStorage.getItem('nickname') || "";
 let communityLevels = JSON.parse(localStorage.getItem('communityLevels')) || [];
 let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
 
-// ESTADO DO JOGO
+// 3. ESTADO GLOBAL
 let isPlaying = false;
 let px = 0, py = 0, vx = 0, vy = 0;
 const gravity = 0.5, jump = -10, speed = 4;
@@ -21,7 +21,7 @@ const keys = {};
 let collisionMap = [];
 let selectedTool = null;
 
-// ATUALIZAÇÃO DA INTERFACE E CARGOS
+// 4. ATUALIZAÇÃO DA INTERFACE E CARGOS
 function updateUI() {
     const coinSpan = document.getElementById('coin-value');
     const nameSpan = document.getElementById('user-name');
@@ -50,7 +50,7 @@ function updateUI() {
     }
 }
 
-// NAVEGAÇÃO
+// 5. NAVEGAÇÃO ENTRE TELAS
 function navigate(target) {
     if(!target) return;
     isPlaying = false;
@@ -66,7 +66,7 @@ function navigate(target) {
     }
 }
 
-// INICIALIZAÇÃO AO CARREGAR
+// 6. INICIALIZAÇÃO (WINDOW ONLOAD)
 window.onload = () => {
     updateUI();
     if (!nickname) document.getElementById('nick-modal')?.classList.remove('hidden');
@@ -110,10 +110,10 @@ window.onload = () => {
         if (!s || !f) return alert("Coloque Spawn e Meta!");
         const mapData = Array.from(document.querySelectorAll('.cell')).map(c => c.className);
         communityLevels.push({ author: nickname, map: mapData });
-        updateUI(); alert("Publicado!"); navigate(screens.menu);
+        updateUI(); alert("Nível Publicado!"); navigate(screens.menu);
     };
 
-    // Ferramentas
+    // Ferramentas do Editor
     document.querySelectorAll('.tool').forEach(t => {
         t.onclick = () => {
             document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
@@ -123,7 +123,7 @@ window.onload = () => {
     });
 };
 
-// EDITOR
+// 7. LÓGICA DO EDITOR (GRID)
 function initGrid() {
     const canvas = document.getElementById('grid-canvas');
     const player = document.getElementById('player');
@@ -138,77 +138,4 @@ function initGrid() {
                 if (cell.classList.contains('block') || cell.classList.contains('lava')) coins += 5;
                 cell.className = 'cell';
             } else if (selectedTool) {
-                if (coins >= cost) {
-                    if (selectedTool === 'spawn' || selectedTool === 'flag') {
-                        const old = document.querySelector(`.cell.${selectedTool}`);
-                        if (old) old.className = 'cell';
-                    }
-                    if (!cell.classList.contains(selectedTool)) {
-                        coins -= cost; cell.className = 'cell ' + selectedTool;
-                    }
-                } else { alert("Sem moedas!"); }
-            }
-            updateUI();
-        };
-        canvas.appendChild(cell);
-    }
-}
-
-// COMUNIDADE
-function renderComm() {
-    const list = document.getElementById('level-list');
-    list.innerHTML = '';
-    communityLevels.forEach((l, i) => {
-        const d = document.createElement('div');
-        d.innerHTML = `<div style="background:#1a1a3a; padding:15px; border-radius:10px; border:1px solid #00f2ff; text-align:center; cursor:pointer;">NÍVEL ${i+1}<br><small>Por: ${l.author}</small></div>`;
-        d.onclick = () => startLevel(l);
-        list.appendChild(d);
-    });
-}
-
-// JOGO
-function startLevel(level) {
-    navigate(screens.editor); document.getElementById('editor-sidebar').style.display = 'none';
-    const canvas = document.getElementById('grid-canvas');
-    const player = document.getElementById('player');
-    canvas.innerHTML = ''; canvas.appendChild(player);
-    collisionMap = level.map;
-    collisionMap.forEach(cls => { const c = document.createElement('div'); c.className = cls; canvas.appendChild(c); });
-    const spawnIdx = collisionMap.findIndex(c => c.includes('spawn'));
-    px = (spawnIdx % 20) * 32 + 6; py = Math.floor(spawnIdx / 20) * 32;
-    vx = 0; vy = 0; player.classList.remove('hidden');
-    isPlaying = true; requestAnimationFrame(loop);
-}
-
-function loop() {
-    if (!isPlaying) return;
-    vx = (keys['ArrowLeft'] || keys['KeyA']) ? -speed : (keys['ArrowRight'] || keys['KeyD']) ? speed : 0;
-    px += vx; if (checkCollision(px, py)) px -= vx;
-    vy += gravity; if (vy > 10) vy = 10;
-    py += vy;
-    if (checkCollision(px, py)) {
-        if (vy > 0) { py = Math.floor((py + 26) / 32) * 32 - 26; vy = 0; if (keys['ArrowUp'] || keys['KeyW'] || keys['Space']) vy = jump; } 
-        else { py = Math.ceil(py / 32) * 32; vy = 0; }
-    }
-    const col = Math.floor((px + 10) / 32), row = Math.floor((py + 13) / 32);
-    const tile = collisionMap[row * 20 + col];
-    if (tile && tile.includes('lava')) { isPlaying = false; alert("DERROTA!"); navigate(screens.menu); return; }
-    if (tile && tile.includes('flag')) { isPlaying = false; coins += 50; updateUI(); alert("VITÓRIA! +50"); navigate(screens.menu); return; }
-    if (py > 480) navigate(screens.menu);
-    document.getElementById('player').style.transform = `translate(${px}px, ${py}px)`;
-    requestAnimationFrame(loop);
-}
-
-function checkCollision(x, y) {
-    const pts = [{x:x+6, y:y+2}, {x:x+14, y:y+2}, {x:x+6, y:y+25}, {x:x+14, y:y+25}];
-    return pts.some(p => { const c = Math.floor(p.x/32), r = Math.floor(p.y/32); return collisionMap[r*20+c]?.includes('block'); });
-}
-
-// CONTROLES
-window.onkeydown = (e) => keys[e.code] = true;
-window.onkeyup = (e) => keys[e.code] = false;
-
-// ADMIN
-function adminAddCoins() { coins += 1000; updateUI(); }
-function adminClearLevels() { if(confirm("Apagar tudo?")) { communityLevels = []; updateUI(); location.reload(); } }
-function closeAdmin() { document.getElementById('admin-modal').classList.add('hidden'); }
+                if (coins >= cost)
