@@ -3,97 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maker Game Studio</title>
-    <link rel="stylesheet" href="Styles.css">
+    <title>MAKER GAME</title>
+    <style>
+        /* CSS INTEGRADO */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #050510; color: white; overflow: hidden; }
+        .hidden { display: none !important; }
+        
+        #header { background: #0a0a20; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f2ff; }
+        .badge-dono { background: gold; color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+        
+        #main-menu { height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        .menu-button { width: 250px; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #00f2ff; color: black; font-size: 16px; }
+
+        #level-editor { display: grid; grid-template-columns: 100px 1fr; height: calc(100vh - 60px); }
+        #editor-sidebar { background: #0a0a20; display: flex; flex-direction: column; gap: 10px; padding: 10px; border-right: 1px solid #333; }
+        .tool { padding: 10px; background: #1a1a3a; border: 1px solid #444; color: white; cursor: pointer; font-size: 10px; text-align: center; border-radius: 4px; }
+        .tool.active { border-color: #00f2ff; background: #004455; }
+
+        #grid-canvas { 
+            display: grid; 
+            grid-template-columns: repeat(20, 1fr); 
+            grid-template-rows: repeat(15, 1fr); 
+            background: #000; 
+            position: relative;
+            width: 640px; height: 480px;
+            margin: auto; border: 2px solid #00f2ff;
+        }
+        .cell { border: 0.1px solid rgba(255,255,255,0.05); box-sizing: border-box; }
+        .cell.block { background: #555; border: 1px solid #888; }
+        .cell.lava { background: #ff4400; box-shadow: inset 0 0 10px #000; }
+        .cell.spawn { background: #00ff00; opacity: 0.5; }
+        .cell.flag { background: #ffff00; clip-path: polygon(20% 0%, 100% 50%, 20% 100%); }
+
+        #nick-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: #1a1a3a; padding: 30px; border-radius: 15px; border: 2px solid #00f2ff; text-align: center; }
+        input { padding: 10px; border-radius: 5px; border: none; margin-bottom: 15px; width: 80%; }
+        
+        #rank-tab { padding: 20px; }
+        .rank-item { background: #1a1a3a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; border-left: 4px solid #00f2ff; }
+    </style>
 </head>
 <body>
-    <header class="top-bar">
-        <div class="logo">MAKER<span>GAME</span></div>
-        <div class="status-group">
-            <button id="admin-panel-btn" class="hidden admin-btn">ADMIN</button>
-            <div class="status-card coin">💰 <span id="coin-value">500</span></div>
-            <div class="status-card nick">👤 <span id="user-name">...</span></div>
-        </div>
-    </header>
 
-    <div id="nick-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <h2>BEM-VINDO</h2>
-            <input type="text" id="nick-input" placeholder="Seu Nickname...">
-            <button id="btn-save-nick" class="glow-button">ENTRAR</button>
+    <div id="header">
+        <h2 style="color:#00f2ff; margin:0;">MAKER GAME</h2>
+        <div id="user-info">
+            <span id="user-name">...</span>
+            <span style="margin-left:15px;">💰 <span id="coin-value">0</span></span>
         </div>
     </div>
 
-    <div id="admin-modal" class="modal-overlay hidden">
-        <div class="modal-card admin-card">
-            <h2>ADMIN PANEL</h2>
-            <button onclick="adminAddCoins()" class="menu-button variant-1">💰 +1000 MOEDAS</button>
-            <button onclick="adminClearLevels()" class="menu-button variant-2">🗑️ LIMPAR TODOS NÍVEIS</button>
-            <button onclick="closeAdmin()" class="back-button">FECHAR</button>
-        </div>
-    </div>
-
-    <main id="main-menu" class="screen">
-        <div class="card main-box">
-            <h1 class="glitch">GAME STUDIO</h1>
-            <div class="button-stack">
-                <button id="btn-play" class="menu-button variant-1">JOGAR NÍVEIS</button>
-                <button id="btn-create" class="menu-button variant-2">CRIAR NÍVEIS</button>
-                <button id="btn-rank" class="menu-button" style="background: #ffcc00; color: #000;">🏆 RANKING RICOS</button>
-            </div>
-        </div>
-    </main>
-
-    <section id="rank-tab" class="screen hidden">
-        <div class="community-container">
-            <header class="tab-header">
-                <h2>TOP RICOS</h2>
-                <button id="btn-back-rank" class="back-button">VOLTAR</button>
-            </header>
-            <div id="rank-list" class="level-grid" style="padding: 20px; display: block;"></div>
-        </div>
-    </section>
-
-    <section id="community-tab" class="screen hidden">
-        <div class="community-container">
-            <header class="tab-header">
-                <h2>COMUNIDADE</h2>
-                <button id="btn-back-comm" class="back-button">VOLTAR</button>
-            </header>
-            <div id="level-list" class="level-grid"></div>
-        </div>
-    </section>
-
-    <section id="level-editor" class="screen hidden">
-        <div class="editor-layout">
-            <aside class="toolbar" id="editor-sidebar">
-                <div class="tool-list">
-                    <button class="tool" data-type="block">📦 BLOCO (5)</button>
-                    <button class="tool" data-type="lava">🔥 LAVA (5)</button>
-                    <button class="tool" data-type="flag">🚩 META</button>
-                    <button class="tool" data-type="spawn">👤 SPAWN</button>
-                    <button class="tool sell-btn" data-type="sell">♻️ VENDER</button>
-                </div>
-                <button id="publish-btn" class="save-button">PUBLICAR</button>
-            </aside>
-            <main class="drawing-area">
-                <div id="grid-canvas" class="grid-container">
-                    <div id="player" class="hidden"></div>
-                </div>
-            </main>
-        </div>
-    </section>
-
-    <div id="mobile-controls" class="mobile-ui hidden">
-        <div class="d-pad">
-            <button id="btn-left">◀</button>
-            <button id="btn-right">▶</button>
-        </div>
-        <div class="action-pad">
-            <button id="btn-jump">PULO</button>
-        </div>
-    </div>
-
-    <script src="top.js?v=refresh1"></script>
-</body>
-</html>
+    <div id="main-menu">
+        <button class="
