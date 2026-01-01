@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - COMPLETO</title>
+    <title>BOLACHA MAKER - OFICIAL</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -13,197 +13,61 @@
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* HEADER */
-        #header { background: #0a0a20; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
+        /* HEADER FIXO */
+        #header { background: #0a0a20; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); position: relative; z-index: 1000; }
         
-        /* MENU */
-        #main-menu { height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
-        .menu-button { width: 260px; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; }
-        .btn-cyan { background: var(--cyan); color: black; box-shadow: 0 0 10px var(--cyan); }
-        .btn-purple { background: var(--purple); color: white; }
+        /* TELAS */
+        .screen { width: 100vw; height: calc(100vh - 60px); display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 60px; left: 0; background: var(--bg); }
 
-        /* EDITOR */
-        #editor-ui { display: flex; height: calc(100vh - 60px); }
-        #sidebar { width: 120px; background: #0a0a20; padding: 10px; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; border-right: 1px solid #333; }
-        .tool { padding: 8px; background: #1a1a3a; border: 1px solid #444; font-size: 10px; text-align: center; cursor: pointer; border-radius: 5px; }
+        /* BOTÕES */
+        .menu-button { width: 280px; padding: 20px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; margin-bottom: 15px; transition: 0.2s; }
+        .btn-cyan { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
+        .btn-purple { background: var(--purple); color: white; box-shadow: 0 0 15px var(--purple); }
+        .btn-gray { background: #333; color: white; }
+
+        /* EDITOR E GRID */
+        #editor-container { display: flex; width: 100%; height: 100%; }
+        #sidebar { width: 100px; background: #0a0a20; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid #333; overflow-y: auto; }
+        .tool { padding: 10px; background: #1a1a3a; border: 1.5px solid #444; font-size: 10px; text-align: center; border-radius: 8px; cursor: pointer; }
         .tool.active { border-color: var(--cyan); background: #004455; }
-        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); background: #000; flex-grow: 1; }
-        .cell { border: 0.1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); background: #000; flex-grow: 1; border: 1px solid #222; }
+        .cell { border: 0.1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 15px; }
 
         /* JOGO */
-        #game-container { position: relative; width: 100vw; height: 70vh; background: #000; display: none; }
-        #player { position: absolute; width: 22px; height: 22px; background: var(--cyan); border-radius: 4px; z-index: 100; border: 2px solid white; }
+        #game-view { position: relative; width: 100%; height: 60%; background: #000; overflow: hidden; }
+        #player { position: absolute; width: 20px; height: 20px; background: var(--cyan); border-radius: 4px; z-index: 100; box-shadow: 0 0 10px var(--cyan); }
         .block-obj { position: absolute; width: 35px; height: 35px; }
-        #game-controls { height: 30vh; background: #0a0a20; display: none; justify-content: space-around; align-items: center; }
+        #controls { width: 100%; height: 40%; background: #0a0a20; display: flex; justify-content: space-around; align-items: center; }
 
-        /* CORES BLOCOS */
-        .b-pedra { background: #555; }
-        .b-lava { background: var(--red); box-shadow: 0 0 10px var(--red); }
+        /* CLASSES DE BLOCO */
+        .b-block { background: #555; }
+        .b-lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
         .b-bomba { background: #333; border-radius: 50%; border: 2px solid #000; }
         .b-bomba::after { content: '💣'; }
-        .b-meta { background: var(--yellow); }
-        .b-spawn { background: #0f0; opacity: 0.3; }
+        .b-flag { background: var(--yellow); }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="font-weight: bold; color: var(--cyan);">BOLACHA MAKER</div>
-        <div id="status">💰 <span id="coins">0</span></div>
+        <div style="font-weight: bold; color: var(--cyan); font-size: 20px;">BOLACHA MAKER</div>
+        <div>💰 <span id="coins">0</span></div>
     </div>
 
-    <div id="main-menu">
-        <button class="menu-button btn-cyan" onclick="abrirEditor()">CRIAR MAPA</button>
-        <button class="menu-button btn-purple" onclick="abrirNiveis()">JOGAR NÍVEIS ONLINE</button>
+    <div id="screen-menu" class="screen">
+        <h1 style="margin-bottom: 30px; color: var(--cyan);">MENU PRINCIPAL</h1>
+        <button class="menu-button btn-cyan" onclick="mudarTela('screen-editor')">CRIAR MEU MAPA</button>
+        <button class="menu-button btn-purple" onclick="abrirGaleria()">JOGAR NÍVEIS ONLINE</button>
+        <button class="menu-button btn-gray" onclick="alert('Ranking em breve!')">RANKING</button>
     </div>
 
-    <div id="editor-ui" class="hidden">
-        <div id="sidebar">
-            <div class="tool" id="t-spawn" onclick="setTool('spawn')">INÍCIO</div>
-            <div class="tool" id="t-flag" onclick="setTool('flag')">META</div>
-            <div class="tool" id="t-block" onclick="setTool('block')">PEDRA</div>
-            <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA</div>
-            <div class="tool" id="t-bomba" onclick="setTool('bomba')">BOMBA 💣</div>
-            <div class="tool" onclick="setTool('sell')" style="color:var(--red)">APAGAR</div>
-            <button onclick="publicar()" style="background:#0f0; border:none; padding:10px; margin-top:20px; font-weight:bold;">PUBLICAR</button>
-            <button onclick="location.reload()" style="background:#444; border:none; color:white; padding:5px; margin-top:10px;">VOLTAR</button>
-        </div>
-        <div id="grid-canvas"></div>
-    </div>
-
-    <div id="levels-screen" class="hidden" style="padding:20px; text-align:center;">
-        <h2>MAPAS ONLINE</h2>
-        <div id="levels-list"></div>
-        <button onclick="location.reload()" class="menu-button btn-cyan" style="margin-top:20px;">VOLTAR</button>
-    </div>
-
-    <div id="game-container">
-        <div id="player"></div>
-        <div id="map-render"></div>
-    </div>
-    <div id="game-controls">
-        <button class="menu-button btn-cyan" style="width:80px;" onmousedown="velX=-6" onmouseup="velX=0">◀</button>
-        <button class="menu-button btn-cyan" style="width:80px;" onclick="jump()">PULO</button>
-        <button class="menu-button btn-cyan" style="width:80px;" onmousedown="velX=6" onmouseup="velX=0">▶</button>
-        <button class="menu-button btn-purple" style="width:80px;" onclick="interagir()">PEGAR</button>
-    </div>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o",
-            authDomain: "bolachamakergame.firebaseapp.com",
-            databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com",
-            projectId: "bolachamakergame",
-            appId: "1:207720367456:web:1a58957162be2b080f4a05"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let tool = 'block';
-        let moedas = parseInt(localStorage.getItem('maker_moedas')) || 7475;
-        let posX, posY, velY=0, velX=0, isJumping=false, blocosFisica=[];
-
-        function updateMoedas() { 
-            document.getElementById('coins').innerText = moedas; 
-            localStorage.setItem('maker_moedas', moedas);
-        }
-
-        // FUNÇÕES DO EDITOR
-        function abrirEditor() {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('editor-ui').classList.remove('hidden');
-            const g = document.getElementById('grid-canvas');
-            g.innerHTML = '';
-            for(let i=0; i<300; i++) {
-                const c = document.createElement('div');
-                c.className = 'cell';
-                c.onclick = () => {
-                    if(tool === 'sell') c.className = 'cell';
-                    else c.className = 'cell b-' + tool;
-                    if(tool === 'spawn') c.innerText = '👤';
-                    if(tool === 'flag') c.innerText = '🚩';
-                };
-                g.appendChild(c);
-            }
-        }
-
-        function setTool(t) { tool = t; }
-
-        function publicar() {
-            let mapa = [];
-            document.querySelectorAll('.cell').forEach((c, i) => {
-                if(c.className !== 'cell') mapa.push({id: i, cl: c.className});
-            });
-            db.ref('mapas').push({autor: "Bolacha", dados: mapa});
-            alert("Mapa Publicado!");
-            location.reload();
-        }
-
-        // FUNÇÕES DE JOGAR
-        function abrirNiveis() {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('levels-screen').classList.remove('hidden');
-            db.ref('mapas').on('value', snap => {
-                const list = document.getElementById('levels-list');
-                list.innerHTML = '';
-                snap.forEach(m => {
-                    const b = document.createElement('button');
-                    b.className = 'menu-button btn-purple';
-                    b.style.marginBottom = '10px';
-                    b.innerText = "MAPA DE " + m.val().autor;
-                    b.onclick = () => iniciarJogo(m.val().dados);
-                    list.appendChild(b);
-                });
-            });
-        }
-
-        function iniciarJogo(dados) {
-            document.getElementById('levels-screen').classList.add('hidden');
-            document.getElementById('game-container').style.display = 'block';
-            document.getElementById('game-controls').style.display = 'flex';
-            
-            const render = document.getElementById('map-render');
-            render.innerHTML = '';
-            blocosFisica = [];
-
-            dados.forEach(d => {
-                const b = document.createElement('div');
-                b.className = 'block-obj ' + d.cl.replace('cell ', '');
-                let x = (d.id % 20) * 35;
-                let y = Math.floor(d.id / 20) * 35;
-                b.style.left = x + 'px';
-                b.style.top = y + 'px';
-                render.appendChild(b);
-                if(d.cl.includes('spawn')) { posX = x; posY = y; }
-                blocosFisica.push({x, y, type: d.cl});
-            });
-            requestAnimationFrame(gameLoop);
-        }
-
-        function gameLoop() {
-            velY += 0.8;
-            posY += velY;
-            posX += velX;
-
-            blocosFisica.forEach(b => {
-                if (posX < b.x + 30 && posX + 20 > b.x && posY < b.y + 30 && posY + 20 > b.y) {
-                    if (b.type.includes('pedra') || b.type.includes('lava')) {
-                        if (b.type.includes('lava')) { location.reload(); }
-                        if(velY > 0) { posY = b.y - 20; velY = 0; isJumping = false; }
-                    }
-                    if (b.type.includes('flag')) { alert("VENCEU!"); location.reload(); }
-                }
-            });
-
-            document.getElementById('player').style.left = posX + 'px';
-            document.getElementById('player').style.top = posY + 'px';
-            if(document.getElementById('game-container').style.display === 'block') requestAnimationFrame(gameLoop);
-        }
-
-        function jump() { if(!isJumping) { velY = -12; isJumping = true; } }
-        function interagir() { alert("Você tentou pegar algo!"); }
-
-        updateMoedas();
-    </script>
-</body>
-</html>
+    <div id="screen-editor" class="screen hidden" style="justify-content: flex-start;">
+        <div id="editor-container">
+            <div id="sidebar">
+                <div class="tool active" id="t-block" onclick="setTool('block')">BLOCO</div>
+                <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA</div>
+                <div class="tool" id="t-bomba" onclick="setTool('bomba')">BOMBA</div>
+                <div class="tool" id="t-spawn" onclick="setTool('spawn')">INÍCIO</div>
+                <div class="tool" id="t-flag" onclick="setTool('flag')">META</div>
+                <div class="tool" onclick="setTool('sell')" style="color:var(--red)">APAGAR</div>
+                <button onclick="publicarMapa
