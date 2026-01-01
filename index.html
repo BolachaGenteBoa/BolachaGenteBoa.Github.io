@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MAKER GAME ONLINE</title>
     <style>
-        /* Estilos mantidos para não mudar o visual que você gosta */
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #050510; color: white; overflow: hidden; }
         .hidden { display: none !important; }
         #header { background: #0a0a20; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f2ff; }
@@ -15,20 +14,25 @@
         .menu-button { width: 250px; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; }
         .btn-cyan { background: #00f2ff; color: black; box-shadow: 0 0 10px #00f2ff; }
         .btn-purple { background: #bc13fe; color: white; box-shadow: 0 0 10px #bc13fe; }
-        .btn-yellow { background: #ffcc00; color: black; box-shadow: 0 0 10px #ffcc00; }
+        
+        /* EDITOR */
         #level-editor { display: flex; height: calc(100vh - 60px); }
-        #editor-sidebar { width: 110px; background: #0a0a20; display: flex; flex-direction: column; gap: 10px; padding: 15px; border-right: 1px solid #333; }
-        .tool { padding: 12px 5px; background: #1a1a3a; border: 1px solid #444; color: white; cursor: pointer; text-align: center; border-radius: 5px; font-size: 11px; }
+        #editor-sidebar { width: 110px; background: #0a0a20; display: flex; flex-direction: column; gap: 8px; padding: 10px; border-right: 1px solid #333; overflow-y: auto; }
+        .tool { padding: 10px 5px; background: #1a1a3a; border: 1px solid #444; color: white; cursor: pointer; text-align: center; border-radius: 5px; font-size: 10px; font-weight: bold; }
         .tool.active { border-color: #00f2ff; background: #004455; box-shadow: 0 0 10px #00f2ff; }
+        
         #editor-main { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
-        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); width: 90vw; max-width: 640px; aspect-ratio: 4/3; border: 2px solid #00f2ff; }
-        .cell { border: 0.1px solid rgba(255,255,255,0.05); }
-        .cell.block { background: #555; }
-        .cell.lava { background: #ff4400; }
+        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); width: 90vw; max-width: 600px; aspect-ratio: 4/3; border: 2px solid #00f2ff; }
+        
+        /* BLOCOS ESPECIAIS */
+        .cell { border: 0.1px solid rgba(255,255,255,0.05); transition: 0.1s; }
+        .cell.block { background: #555; border: 1px solid #777; }
+        .cell.lava { background: #ff4400; box-shadow: inset 0 0 8px #000; }
+        .cell.spawn { background: #00ff00; border: 2px solid #fff; box-shadow: 0 0 10px #00ff00; position: relative; }
+        .cell.spawn::after { content: "👤"; font-size: 12px; position: absolute; left: 25%; }
+        .cell.flag { background: #ffcc00; clip-path: polygon(20% 0%, 100% 50%, 20% 100%); border-left: 4px solid #fff; }
+
         .screen-overlay { padding: 20px; text-align: center; overflow-y: auto; height: 80vh; }
-        .rank-card { background: #0a0a20; border: 2px solid #ffcc00; border-radius: 15px; max-width: 320px; margin: 20px auto; padding: 15px; }
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 10px; border-bottom: 1px solid #1a1a3a; }
     </style>
 </head>
 <body>
@@ -45,7 +49,6 @@
     <div id="main-menu">
         <button class="menu-button btn-cyan" onclick="irPara('editor')">Criar Mapa</button>
         <button class="menu-button btn-purple" onclick="irPara('niveis')">Níveis Online</button>
-        <button class="menu-button btn-yellow" onclick="irPara('rank')">Ranking Global</button>
     </div>
 
     <div id="editor-screen" class="hidden">
@@ -53,45 +56,28 @@
             <div id="editor-sidebar">
                 <div class="tool" id="t-block" onclick="setTool('block')">BLOCO (5)</div>
                 <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA (5)</div>
+                <div class="tool" id="t-spawn" style="background:#004400" onclick="setTool('spawn')">SPAWN (0)</div>
+                <div class="tool" id="t-flag" style="background:#444400" onclick="setTool('flag')">META (0)</div>
                 <div class="tool" id="t-sell" style="color:red" onclick="setTool('sell')">VENDER</div>
-                <button onclick="publicarMapa()" style="background:#0f0; padding:10px; border:none; border-radius:5px; margin-top:10px;">PUBLICAR</button>
-                <button onclick="location.reload()" style="background:none; color:white; border:1px solid #444; margin-top:20px;">SAIR</button>
+                <button onclick="publicarMapa()" style="background:#0f0; padding:10px; border:none; border-radius:5px; margin-top:5px; font-weight:bold; cursor:pointer;">PUBLICAR</button>
+                <button onclick="location.reload()" style="background:none; color:white; border:1px solid #444; margin-top:15px; cursor:pointer;">SAIR</button>
             </div>
             <div id="editor-main"><div id="grid-canvas"></div></div>
         </div>
     </div>
 
-    <div id="rank-screen" class="hidden screen-overlay">
-        <h2 style="color:#ffcc00">🏆 RANKING REAL</h2>
-        <div class="rank-card"><table><tbody id="rank-body"></tbody></table></div>
-        <button class="menu-button btn-cyan" onclick="location.reload()">VOLTAR</button>
-    </div>
-
     <div id="levels-screen" class="hidden screen-overlay">
-        <h2 style="color:#bc13fe">MAPAS DA GALERA</h2>
+        <h2 style="color:#bc13fe">MAPAS DA COMUNIDADE</h2>
         <div id="levels-list" style="display:flex; flex-direction:column; gap:10px; align-items:center;"></div>
         <button class="menu-button btn-cyan" onclick="location.reload()">VOLTAR</button>
     </div>
 
     <script>
-        // CONFIGURAÇÕES DE LOGIN
-        let nick = localStorage.getItem('maker_nick');
-        if(!nick) {
-            nick = prompt("Qual seu Nick?");
-            localStorage.setItem('maker_nick', nick || "Player");
-            location.reload();
-        }
+        let nick = localStorage.getItem('maker_nick') || prompt("Qual seu Nick?") || "Player";
+        localStorage.setItem('maker_nick', nick);
 
         let moedas = localStorage.getItem('moedas_save') ? parseInt(localStorage.getItem('moedas_save')) : 7475;
         let ferramenta = null;
-
-        // BANCO DE DADOS (Simulado via JSONBIN para teste rápido)
-        // Nota: Para um jogo real com amigos, o próximo passo será o Firebase.
-        async function salvarNoBanco(dados, tipo) {
-            console.log("Salvando na nuvem...");
-            // Aqui simulamos o salvamento. Em um banco real, usaríamos um fetch/POST.
-            localStorage.setItem('cloud_' + tipo + '_' + nick, JSON.stringify(dados));
-        }
 
         function updateUI() {
             document.getElementById('coin-value').innerText = moedas;
@@ -105,31 +91,9 @@
             if(tela === 'editor') {
                 document.getElementById('editor-screen').classList.remove('hidden');
                 gerarGrade();
-            } else if(tela === 'rank') {
-                document.getElementById('rank-screen').classList.remove('hidden');
-                carregarRank();
             } else if(tela === 'niveis') {
                 document.getElementById('levels-screen').classList.remove('hidden');
                 carregarNiveis();
-            }
-        }
-
-        function gerarGrade() {
-            const canvas = document.getElementById('grid-canvas');
-            canvas.innerHTML = '';
-            for(let i=0; i<300; i++) {
-                const c = document.createElement('div');
-                c.className = 'cell';
-                c.onclick = function() {
-                    if(ferramenta === 'block' && moedas >= 5) { this.className = 'cell block'; moedas -= 5; }
-                    else if(ferramenta === 'lava' && moedas >= 5) { this.className = 'cell lava'; moedas -= 5; }
-                    else if(ferramenta === 'sell') { 
-                        if(this.classList.contains('block') || this.classList.contains('lava')) moedas += 5;
-                        this.className = 'cell';
-                    }
-                    updateUI();
-                };
-                canvas.appendChild(c);
             }
         }
 
@@ -139,39 +103,44 @@
             document.getElementById('t-' + t).classList.add('active');
         }
 
+        function gerarGrade() {
+            const canvas = document.getElementById('grid-canvas');
+            canvas.innerHTML = '';
+            for(let i=0; i<300; i++) {
+                const c = document.createElement('div');
+                c.className = 'cell';
+                c.onclick = function() {
+                    if(!ferramenta) return;
+                    
+                    // Lógica para garantir apenas um Spawn e uma Meta
+                    if(ferramenta === 'spawn' || ferramenta === 'flag') {
+                        const antigo = document.querySelector('.' + ferramenta);
+                        if(antigo) antigo.className = 'cell';
+                        this.className = 'cell ' + ferramenta;
+                    } 
+                    else if(ferramenta === 'block' && moedas >= 5) { 
+                        if(!this.classList.contains('block')) { this.className = 'cell block'; moedas -= 5; }
+                    } 
+                    else if(ferramenta === 'lava' && moedas >= 5) { 
+                        if(!this.classList.contains('lava')) { this.className = 'cell lava'; moedas -= 5; }
+                    } 
+                    else if(ferramenta === 'sell') {
+                        if(this.classList.contains('block') || this.classList.contains('lava')) moedas += 5;
+                        this.className = 'cell';
+                    }
+                    updateUI();
+                };
+                canvas.appendChild(c);
+            }
+        }
+
         function publicarMapa() {
+            const hasSpawn = document.querySelector('.spawn');
+            const hasFlag = document.querySelector('.flag');
+            
+            if(!hasSpawn || !hasFlag) {
+                alert("ERRO: Seu mapa precisa de um SPAWN e uma META para ser publicado!");
+                return;
+            }
+
             const cells = document.querySelectorAll('.cell');
-            let data = [];
-            cells.forEach((c, i) => {
-                if(c.classList.contains('block')) data.push({p: i, t: 'block'});
-                if(c.classList.contains('lava')) data.push({p: i, t: 'lava'});
-            });
-            salvarNoBanco(data, 'mapa');
-            alert("MAPA ENVIADO PARA A NUVEM!");
-            location.reload();
-        }
-
-        function carregarRank() {
-            const body = document.getElementById('rank-body');
-            // Aqui o ideal é puxar de uma API. Simulando dados de amigos:
-            let fakeCloudRank = [
-                {n: nick, m: moedas},
-                {n: "Amigo_Teste", m: 500}
-            ];
-            body.innerHTML = fakeCloudRank.map((p, i) => `<tr><td>#${i+1}</td><td>${p.n}</td><td>💰 ${p.m}</td></tr>`).join('');
-        }
-
-        function carregarNiveis() {
-            const list = document.getElementById('levels-list');
-            list.innerHTML = `<button class="menu-button btn-purple">Mapa de ${nick}</button>`;
-        }
-
-        function abrirAdmin() {
-            let p = prompt("SENHA:");
-            if(p === "123") { moedas += 5000; updateUI(); }
-        }
-
-        window.onload = updateUI;
-    </script>
-</body>
-</html>
