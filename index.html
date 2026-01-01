@@ -39,9 +39,20 @@
             <div class="button-stack">
                 <button id="btn-play" class="menu-button variant-1">JOGAR NÍVEIS</button>
                 <button id="btn-create" class="menu-button variant-2">CRIAR NÍVEIS</button>
+                <button id="btn-rank" class="menu-button" style="background: #ffcc00; color: #000;">🏆 RANKING RICOS</button>
             </div>
         </div>
     </main>
+
+    <section id="rank-tab" class="screen hidden">
+        <div class="community-container">
+            <header class="tab-header">
+                <h2>TOP RICOS</h2>
+                <button id="btn-back-rank" class="back-button">VOLTAR</button>
+            </header>
+            <div id="rank-list" class="level-grid" style="padding: 20px; display: block;"></div>
+        </div>
+    </section>
 
     <section id="community-tab" class="screen hidden">
         <div class="community-container">
@@ -63,7 +74,7 @@
                     <button class="tool" data-type="spawn">👤 SPAWN</button>
                     <button class="tool sell-btn" data-type="sell">♻️ VENDER</button>
                 </div>
-                <button id="publish-btn" class="save-button">PUBLICAR NÍVEL</button>
+                <button id="publish-btn" class="save-button">PUBLICAR</button>
             </aside>
             <main class="drawing-area">
                 <div id="grid-canvas" class="grid-container">
