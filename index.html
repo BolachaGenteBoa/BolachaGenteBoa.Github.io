@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V3</title>
+    <title>BOLACHA MAKER - ECONOMIA</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -13,28 +13,28 @@
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* HEADER */
         #header { background: #0a0a20; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); }
         .badge-dono { background: var(--yellow); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
 
-        /* CONTEÚDO DINÂMICO */
-        #main-content { height: calc(100vh - 65px); width: 100vw; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #main-content { height: calc(100vh - 65px); width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
         /* BOTOES MENU */
-        .menu-button { width: 280px; padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; margin: 10px 0; transition: 0.3s; }
+        .menu-button { width: 280px; padding: 18px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; margin: 10px 0; }
         .btn-cyan { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
         .btn-purple { background: var(--purple); color: white; box-shadow: 0 0 15px var(--purple); }
         .btn-yellow { background: var(--yellow); color: black; box-shadow: 0 0 15px var(--yellow); }
 
         /* EDITOR */
         #editor-container { display: flex; width: 100%; height: 100%; }
-        #sidebar { width: 110px; background: #0a0a20; padding: 10px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid #333; overflow-y: auto; }
-        .tool { padding: 10px; background: #1a1a3a; border: 1px solid #444; font-size: 10px; text-align: center; border-radius: 8px; cursor: pointer; }
+        #sidebar { width: 115px; background: #0a0a20; padding: 8px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid #333; overflow-y: auto; }
+        .tool { padding: 8px; background: #1a1a3a; border: 1px solid #444; font-size: 9px; text-align: center; border-radius: 6px; cursor: pointer; }
         .tool.active { border-color: var(--cyan); background: #004455; box-shadow: 0 0 10px var(--cyan); }
+        .preco { display: block; color: var(--yellow); font-size: 8px; margin-top: 2px; }
+        
         #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); background: #000; flex-grow: 1; border: 1px solid #222; }
         .cell { border: 0.1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 
-        /* CORES BLOCOS */
+        /* ESTILO BLOCOS */
         .b-block { background: #555; }
         .b-grass { background: #2ecc71; border-top: 3px solid #1e8449; }
         .b-sand { background: #f1c40f; }
@@ -48,25 +48,25 @@
         table { width: 90%; margin-top: 20px; border-collapse: collapse; }
         td { padding: 12px; border-bottom: 1px solid #1a1a3a; text-align: center; }
 
-        #admin-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 3px solid var(--red); padding: 20px; border-radius: 15px; z-index: 2000; width: 260px; text-align: center; box-shadow: 0 0 30px #000; }
+        #admin-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 3px solid var(--red); padding: 20px; border-radius: 15px; z-index: 2000; width: 260px; text-align: center; }
+        .error-money { color: var(--red) !important; animation: shake 0.2s 3; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(5px); } 50% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="font-size: 14px;"><span id="display-nick">...</span></div>
-        <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
+        <div id="display-nick" style="font-size: 14px;">...</div>
+        <div id="coin-box" style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
         <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:5px; font-weight:bold; cursor:pointer;">DONO</button>
     </div>
 
-    <div id="main-content">
-        </div>
+    <div id="main-content"></div>
 
     <div id="admin-panel" class="hidden">
-        <h3 style="color:var(--red)">PAINEL DE ADMIN</h3>
-        <button onclick="addMoedas(100000)" style="width:100%; padding:10px; margin-bottom:10px;">+100.000 MOEDAS</button>
-        <button onclick="db.ref('ranking').remove(); alert('Rank limpo!')" style="width:100%; padding:10px; background:red; color:white;">RESETAR RANKING</button>
-        <button onclick="toggleAdmin()" style="margin-top:15px; background:#444; color:white; border:none; padding:8px; border-radius:5px;">FECHAR</button>
+        <h3 style="color:var(--red)">PAINEL ADMIN</h3>
+        <button onclick="addMoedas(50000)" style="width:100%; padding:10px;">+50k MOEDAS</button>
+        <button onclick="toggleAdmin()" style="margin-top:15px;">FECHAR</button>
     </div>
 
     <script>
@@ -80,12 +80,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let nick = localStorage.getItem('maker_nick') || prompt("Digite seu Nick:");
-        if(!nick) nick = "Player" + Math.floor(Math.random()*999);
-        localStorage.setItem('maker_nick', nick);
-
+        let nick = localStorage.getItem('maker_nick') || "Bolacha";
         let moedas = parseInt(localStorage.getItem('maker_moedas')) || 7475;
         let toolAtual = 'block';
+
+        // TABELA DE PREÇOS
+        const precos = {
+            'block': 5, 'grass': 5, 'sand': 8, 'metal': 15, 'glass': 20, 'lava': 50, 'bomba': 100, 'spawn': 0, 'flag': 0
+        };
 
         function syncUI() {
             document.getElementById('display-nick').innerHTML = nick + (nick.toLowerCase() === 'bolacha' ? '<span class="badge-dono">DONO</span>' : '');
@@ -95,45 +97,32 @@
             db.ref('ranking/' + nick).set({moedas: moedas});
         }
 
-        // --- SISTEMA DE TELAS ---
         const content = document.getElementById('main-content');
 
         function telaMenu() {
             content.innerHTML = `
-                <h1 style="color: var(--cyan); font-size: 40px; margin-bottom: 20px;">BOLACHA MAKER</h1>
+                <h1 style="color: var(--cyan); font-size: 35px; margin-bottom: 20px;">BOLACHA MAKER</h1>
                 <button class="menu-button btn-cyan" onclick="telaEditor()">CRIAR MAPA</button>
                 <button class="menu-button btn-purple" onclick="telaGaleria()">NÍVEIS ONLINE</button>
                 <button class="menu-button btn-yellow" onclick="telaRanking()">RANKING GLOBAL</button>
             `;
         }
 
-        function telaRanking() {
-            content.innerHTML = `<h2>🏆 TOP JOGADORES</h2><table id="rt"><tbody></tbody></table><button class="menu-button btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
-            db.ref('ranking').orderByChild('moedas').limitToLast(10).on('value', snap => {
-                let html = ""; let lista = [];
-                snap.forEach(p => { lista.push({n: p.key, m: p.val().moedas}) });
-                lista.reverse().forEach((p, i) => {
-                    html += `<tr><td>#${i+1}</td><td>${p.n}</td><td style="color:var(--cyan)">💰 ${p.m}</td></tr>`;
-                });
-                document.querySelector('#rt tbody').innerHTML = html;
-            });
-        }
-
         function telaEditor() {
             content.innerHTML = `
                 <div id="editor-container">
                     <div id="sidebar">
-                        <div class="tool active" onclick="setT(this,'block')">PEDRA</div>
-                        <div class="tool" onclick="setT(this,'grass')">ERVA</div>
-                        <div class="tool" onclick="setT(this,'sand')">AREIA</div>
-                        <div class="tool" onclick="setT(this,'metal')">METAL</div>
-                        <div class="tool" onclick="setT(this,'glass')">VIDRO</div>
-                        <div class="tool" onclick="setT(this,'lava')">LAVA</div>
-                        <div class="tool" onclick="setT(this,'bomba')">BOMBA 💣</div>
-                        <hr style="width:100%;border:0.1px solid #333">
-                        <div class="tool" onclick="setT(this,'spawn')">INÍCIO</div>
-                        <div class="tool" onclick="setT(this,'flag')">META</div>
-                        <div class="tool" onclick="setT(this,'sell')" style="color:red">APAGAR</div>
+                        <div class="tool active" onclick="setT(this,'block')">PEDRA <span class="preco">5</span></div>
+                        <div class="tool" onclick="setT(this,'grass')">ERVA <span class="preco">5</span></div>
+                        <div class="tool" onclick="setT(this,'sand')">AREIA <span class="preco">8</span></div>
+                        <div class="tool" onclick="setT(this,'metal')">METAL <span class="preco">15</span></div>
+                        <div class="tool" onclick="setT(this,'glass')">VIDRO <span class="preco">20</span></div>
+                        <div class="tool" onclick="setT(this,'lava')">LAVA <span class="preco">50</span></div>
+                        <div class="tool" onclick="setT(this,'bomba')">BOMBA <span class="preco">100</span></div>
+                        <hr style="width:100%; border:0.1px solid #333">
+                        <div class="tool" onclick="setT(this,'spawn')">INÍCIO <span class="preco">0</span></div>
+                        <div class="tool" onclick="setT(this,'flag')">META <span class="preco">0</span></div>
+                        <div class="tool" onclick="setT(this,'sell')" style="color:red">VENDER <span class="preco">+2</span></div>
                         <button onclick="postar()" style="background:#0f0; border:none; padding:10px; border-radius:8px; font-weight:bold; margin-top:10px; cursor:pointer">POSTAR</button>
                         <button onclick="telaMenu()" style="background:#444; color:white; border:none; padding:8px; border-radius:8px; margin-top:5px; cursor:pointer">VOLTAR</button>
                     </div>
@@ -144,19 +133,47 @@
             for(let i=0; i<300; i++) {
                 const c = document.createElement('div'); c.className = 'cell';
                 c.onclick = () => {
-                    if(toolAtual === 'sell') { c.className = 'cell'; c.innerText = ''; }
-                    else { 
-                        c.className = 'cell b-' + toolAtual;
-                        if(toolAtual === 'spawn') c.innerText = '👤';
-                        if(toolAtual === 'flag') c.innerText = '🚩';
+                    if(toolAtual === 'sell') { 
+                        if(c.className !== 'cell') { moedas += 2; syncUI(); }
+                        c.className = 'cell'; c.innerText = ''; 
+                    } else {
+                        let custo = precos[toolAtual];
+                        if(moedas >= custo) {
+                            moedas -= custo;
+                            syncUI();
+                            c.className = 'cell b-' + toolAtual;
+                            if(toolAtual === 'spawn') {
+                                document.querySelectorAll('.cell').forEach(cel => { if(cel.innerText==='👤'){cel.className='cell'; cel.innerText=''}});
+                                c.innerText = '👤';
+                            }
+                            if(toolAtual === 'flag') {
+                                document.querySelectorAll('.cell').forEach(cel => { if(cel.innerText==='🚩'){cel.className='cell'; cel.innerText=''}});
+                                c.innerText = '🚩';
+                            }
+                        } else {
+                            document.getElementById('coin-box').classList.add('error-money');
+                            setTimeout(() => document.getElementById('coin-box').classList.remove('error-money'), 500);
+                        }
                     }
                 };
                 g.appendChild(c);
             }
         }
 
+        function telaRanking() {
+            content.innerHTML = `<h2>🏆 RANKING</h2><table id="rt"><tbody></tbody></table><button class="menu-button btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
+            db.ref('ranking').orderByChild('moedas').limitToLast(10).on('value', snap => {
+                let html = ""; let lista = [];
+                snap.forEach(p => { lista.push({n: p.key, m: p.val().moedas}) });
+                lista.reverse().forEach((p, i) => {
+                    html += `<tr><td>#${i+1}</td><td>${p.n}</td><td style="color:var(--cyan)">💰 ${p.m}</td></tr>`;
+                });
+                document.querySelector('#rt tbody').innerHTML = html;
+            });
+        }
+
         function telaGaleria() {
-            content.innerHTML = `<h2>MAPAS DA GALERA</h2><div id="ll" style="width:90%; text-align:center"></div><button class="menu-button btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
+            content.innerHTML = `<h2>NÍVEIS</h2><div id="ll" style="width:90%"></div><button class="menu-button btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
             db.ref('mapas').once('value', snap => {
                 const list = document.getElementById('ll');
                 snap.forEach(m => {
@@ -177,7 +194,7 @@
         function postar() {
             let dados = [];
             document.querySelectorAll('.cell').forEach((c, i) => { if(c.className !== 'cell') dados.push({id: i, cl: c.className}) });
-            if(dados.length === 0) return alert("Mapa vazio!");
+            if(!document.body.innerText.includes('👤') || !document.body.innerText.includes('🚩')) return alert("Falta o INÍCIO ou a META!");
             db.ref('mapas').push({autor: nick, dados: dados});
             alert("Mapa Publicado!");
             telaMenu();
@@ -186,7 +203,6 @@
         function toggleAdmin() { document.getElementById('admin-panel').classList.toggle('hidden'); }
         function addMoedas(v) { moedas += v; syncUI(); }
 
-        // INICIAR JOGO
         syncUI();
         telaMenu();
     </script>
