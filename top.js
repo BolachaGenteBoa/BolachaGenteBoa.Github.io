@@ -1,105 +1,78 @@
-// VARIÁVEIS TIPO 'LET' PARA COMPATIBILIDADE MOBILE
-let moedas = localStorage.getItem('coins') ? parseInt(localStorage.getItem('coins')) : 500;
-let nomeUsuario = localStorage.getItem('nickname') || "";
-let listaRanking = JSON.parse(localStorage.getItem('leaderboard')) || [];
-let ferramenta = null;
+let coins = localStorage.getItem('coins') ? parseInt(localStorage.getItem('coins')) : 500;
+let nickname = localStorage.getItem('nickname') || "";
+let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+let selectedTool = null;
 
-const telas = { 
+const screens = { 
     menu: document.getElementById('main-menu'), 
     rank: document.getElementById('rank-tab'),
     editor: document.getElementById('level-editor')
 };
 
-// ATUALIZAR INTERFACE
-function atualizarTELA() {
-    const txtMoedas = document.getElementById('coin-value');
-    const txtNome = document.getElementById('user-name');
-    
-    if(txtMoedas) txtMoedas.innerText = moedas;
-    if(txtNome) {
-        txtNome.innerHTML = nomeUsuario || "...";
-        if (nomeUsuario === "Bolacha") {
-            txtNome.innerHTML += ' <span class="badge-dono">DONO</span>';
-        }
+function navigate(target) {
+    Object.values(screens).forEach(s => s?.classList.add('hidden'));
+    if(target) target.classList.remove('hidden');
+}
+
+function updateUI() {
+    const c = document.getElementById('coin-value');
+    const n = document.getElementById('user-name');
+    if(c) c.innerText = coins;
+    if(n) {
+        n.innerHTML = nickname || "...";
+        if(nickname === "Bolacha") n.innerHTML += ' <span class="badge-dono">DONO</span>';
     }
-    localStorage.setItem('coins', moedas);
+    localStorage.setItem('coins', coins);
 }
 
-function mudarTela(alvo) {
-    Object.values(telas).forEach(t => { if(t) t.classList.add('hidden'); });
-    if(alvo) alvo.classList.remove('hidden');
-}
-
-// CRIAR GRADE DO MAPA
-function criarGrade() {
-    const grade = document.getElementById('grid-canvas');
-    if(!grade) return;
-    grade.innerHTML = '<div id="player" class="hidden"></div>'; 
-    
+function initGrid() {
+    const canvas = document.getElementById('grid-canvas');
+    if(!canvas) return;
+    canvas.innerHTML = '<div id="player" class="hidden"></div>'; 
     for (let i = 0; i < 300; i++) {
-        const bloco = document.createElement('div');
-        bloco.className = 'cell';
-        bloco.onclick = function() {
-            let custo = (ferramenta === 'block' || ferramenta === 'lava') ? 5 : 0;
-            if (ferramenta === 'sell') {
-                if (bloco.classList.contains('block') || bloco.classList.contains('lava')) moedas += 5;
-                bloco.className = 'cell';
-            } else if (ferramenta && moedas >= custo) {
-                if (ferramenta === 'spawn' || ferramenta === 'flag') {
-                    const antigo = document.querySelector('.cell.' + ferramenta);
-                    if(antigo) antigo.classList.remove(ferramenta);
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.onclick = () => {
+            let cost = (selectedTool === 'block' || selectedTool === 'lava') ? 5 : 0;
+            if (selectedTool === 'sell') {
+                if (cell.classList.contains('block') || cell.classList.contains('lava')) coins += 5;
+                cell.className = 'cell';
+            } else if (selectedTool && coins >= cost) {
+                if (selectedTool === 'spawn' || selectedTool === 'flag') {
+                    document.querySelector('.'+selectedTool)?.classList.remove(selectedTool);
                 }
-                bloco.className = 'cell ' + ferramenta;
-                moedas -= custo;
+                cell.className = 'cell ' + selectedTool;
+                coins -= cost;
             }
-            atualizarTELA();
+            updateUI();
         };
-        grade.appendChild(bloco);
+        canvas.appendChild(cell);
     }
 }
 
-// INICIALIZAÇÃO
-window.onload = function() {
-    atualizarTELA();
+window.onload = () => {
+    updateUI();
+    document.getElementById('btn-create').onclick = () => { initGrid(); navigate(screens.editor); };
+    document.getElementById('btn-rank').onclick = () => {
+        const list = document.getElementById('rank-list');
+        if(list) list.innerHTML = leaderboard.sort((a,b)=>b.coins-a.coins).slice(0,5).map((u,i)=>`<div>#${i+1} ${u.name} - ${u.coins}</div>`).join('');
+        navigate(screens.rank);
+    };
+    document.getElementById('btn-back-rank').onclick = () => navigate(screens.menu);
     
-    // Botão Criar
-    const btnCriar = document.getElementById('btn-create');
-    if(btnCriar) btnCriar.onclick = function() {
-        criarGrade();
-        mudarTela(telas.editor);
-    };
-
-    // Botão Ranking
-    const btnRank = document.getElementById('btn-rank');
-    if(btnRank) btnRank.onclick = function() {
-        const listaHTML = document.getElementById('rank-list');
-        if(listaHTML) {
-            listaHTML.innerHTML = listaRanking.sort((a,b) => b.coins - a.coins).slice(0,5).map((u, i) => 
-                `<div style="padding:10px; border-bottom:1px solid #333;">#${i+1} ${u.name} - 💰 ${u.coins}</div>`
-            ).join('');
-        }
-        mudarTela(telas.rank);
-    };
-
-    document.getElementById('btn-back-rank').onclick = () => mudarTela(telas.menu);
-
-    // Seleção de Ferramentas
-    document.querySelectorAll('.tool').forEach(t => {
-        t.onclick = function() {
-            document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            ferramenta = this.dataset.type;
-        };
+    document.querySelectorAll('.tool').forEach(t => t.onclick = () => {
+        document.querySelectorAll('.tool').forEach(b => b.classList.remove('active'));
+        t.classList.add('active');
+        selectedTool = t.dataset.type;
     });
 
-    // Nickname
-    document.getElementById('btn-save-nick').onclick = function() {
-        const input = document.getElementById('nick-input');
-        if(input && input.value.length >= 2) {
-            nomeUsuario = input.value.trim();
-            localStorage.setItem('nickname', nomeUsuario);
+    document.getElementById('btn-save-nick').onclick = () => {
+        const val = document.getElementById('nick-input').value;
+        if(val.length > 1) {
+            nickname = val;
+            localStorage.setItem('nickname', nickname);
             document.getElementById('nick-modal').classList.add('hidden');
-            atualizarTELA();
+            updateUI();
         }
     };
 };
