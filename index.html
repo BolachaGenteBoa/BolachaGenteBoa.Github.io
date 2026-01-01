@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - OFICIAL</title>
+    <title>BOLACHA MAKER - MODO DONO</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -13,61 +13,194 @@
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* HEADER FIXO */
-        #header { background: #0a0a20; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); position: relative; z-index: 1000; }
-        
+        /* HEADER */
+        #header { background: #0a0a20; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); position: relative; z-index: 1001; }
+        .badge-dono { background: var(--yellow); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; margin-left: 5px; }
+
         /* TELAS */
-        .screen { width: 100vw; height: calc(100vh - 60px); display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 60px; left: 0; background: var(--bg); }
+        .screen { width: 100vw; height: calc(100vh - 60px); display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 60px; left: 0; background: var(--bg); overflow-y: auto; }
 
-        /* BOTÕES */
-        .menu-button { width: 280px; padding: 20px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; margin-bottom: 15px; transition: 0.2s; }
-        .btn-cyan { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
-        .btn-purple { background: var(--purple); color: white; box-shadow: 0 0 15px var(--purple); }
-        .btn-gray { background: #333; color: white; }
+        /* BOTOES */
+        .menu-button { width: 260px; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; text-transform: uppercase; margin-bottom: 10px; }
+        .btn-cyan { background: var(--cyan); color: black; box-shadow: 0 0 10px var(--cyan); }
+        .btn-purple { background: var(--purple); color: white; box-shadow: 0 0 10px var(--purple); }
+        .btn-yellow { background: var(--yellow); color: black; box-shadow: 0 0 10px var(--yellow); }
 
-        /* EDITOR E GRID */
+        /* EDITOR */
         #editor-container { display: flex; width: 100%; height: 100%; }
-        #sidebar { width: 100px; background: #0a0a20; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid #333; overflow-y: auto; }
-        .tool { padding: 10px; background: #1a1a3a; border: 1.5px solid #444; font-size: 10px; text-align: center; border-radius: 8px; cursor: pointer; }
-        .tool.active { border-color: var(--cyan); background: #004455; }
-        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); background: #000; flex-grow: 1; border: 1px solid #222; }
-        .cell { border: 0.1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+        #sidebar { width: 110px; background: #0a0a20; padding: 10px; display: flex; flex-direction: column; gap: 5px; border-right: 1px solid #333; overflow-y: auto; }
+        .tool { padding: 8px; background: #1a1a3a; border: 1px solid #444; font-size: 9px; text-align: center; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
+        .tool.active { border-color: var(--cyan); background: #004455; box-shadow: 0 0 5px var(--cyan); }
+        #grid-canvas { display: grid; grid-template-columns: repeat(20, 1fr); background: #000; flex-grow: 1; }
+        .cell { border: 0.1px solid #111; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 
-        /* JOGO */
-        #game-view { position: relative; width: 100%; height: 60%; background: #000; overflow: hidden; }
-        #player { position: absolute; width: 20px; height: 20px; background: var(--cyan); border-radius: 4px; z-index: 100; box-shadow: 0 0 10px var(--cyan); }
-        .block-obj { position: absolute; width: 35px; height: 35px; }
-        #controls { width: 100%; height: 40%; background: #0a0a20; display: flex; justify-content: space-around; align-items: center; }
-
-        /* CLASSES DE BLOCO */
+        /* ESTILOS BLOCOS NO EDITOR */
         .b-block { background: #555; }
+        .b-grass { background: #2ecc71; border-top: 3px solid #1e8449; }
+        .b-sand { background: #f1c40f; }
+        .b-metal { background: #95a5a6; border: 2px solid #7f8c8d; }
+        .b-glass { background: rgba(0, 242, 255, 0.3); border: 1px solid var(--cyan); }
         .b-lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
         .b-bomba { background: #333; border-radius: 50%; border: 2px solid #000; }
         .b-bomba::after { content: '💣'; }
         .b-flag { background: var(--yellow); }
+
+        /* RANKING TABLE */
+        table { width: 90%; border-collapse: collapse; margin-top: 20px; }
+        td { padding: 10px; border-bottom: 1px solid #1a1a3a; text-align: center; }
+
+        /* ADMIN PANEL */
+        #admin-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; border: 3px solid var(--red); padding: 20px; border-radius: 15px; z-index: 2000; width: 250px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="font-weight: bold; color: var(--cyan); font-size: 20px;">BOLACHA MAKER</div>
-        <div>💰 <span id="coins">0</span></div>
+        <div style="font-size: 14px;">👤 <span id="display-nick">...</span></div>
+        <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
+        <button id="admin-btn" class="hidden" onclick="toggleAdmin()" style="background:var(--red); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px;">DONO</button>
     </div>
 
     <div id="screen-menu" class="screen">
-        <h1 style="margin-bottom: 30px; color: var(--cyan);">MENU PRINCIPAL</h1>
-        <button class="menu-button btn-cyan" onclick="mudarTela('screen-editor')">CRIAR MEU MAPA</button>
-        <button class="menu-button btn-purple" onclick="abrirGaleria()">JOGAR NÍVEIS ONLINE</button>
-        <button class="menu-button btn-gray" onclick="alert('Ranking em breve!')">RANKING</button>
+        <h1 style="color: var(--cyan); margin-bottom: 30px;">BOLACHA MAKER</h1>
+        <button class="menu-button btn-cyan" onclick="mudarTela('screen-editor')">CRIAR MAPA</button>
+        <button class="menu-button btn-purple" onclick="abrirGaleria()">NÍVEIS ONLINE</button>
+        <button class="menu-button btn-yellow" onclick="abrirRanking()">RANKING GLOBAL</button>
     </div>
 
     <div id="screen-editor" class="screen hidden" style="justify-content: flex-start;">
         <div id="editor-container">
             <div id="sidebar">
-                <div class="tool active" id="t-block" onclick="setTool('block')">BLOCO</div>
+                <div class="tool active" id="t-block" onclick="setTool('block')">PEDRA</div>
+                <div class="tool" id="t-grass" onclick="setTool('grass')">ERVA</div>
+                <div class="tool" id="t-sand" onclick="setTool('sand')">AREIA</div>
+                <div class="tool" id="t-metal" onclick="setTool('metal')">METAL</div>
+                <div class="tool" id="t-glass" onclick="setTool('glass')">VIDRO</div>
                 <div class="tool" id="t-lava" onclick="setTool('lava')">LAVA</div>
-                <div class="tool" id="t-bomba" onclick="setTool('bomba')">BOMBA</div>
+                <div class="tool" id="t-bomba" onclick="setTool('bomba')">BOMBA 💣</div>
+                <hr style="width:100%; border:0.5px solid #333;">
                 <div class="tool" id="t-spawn" onclick="setTool('spawn')">INÍCIO</div>
                 <div class="tool" id="t-flag" onclick="setTool('flag')">META</div>
                 <div class="tool" onclick="setTool('sell')" style="color:var(--red)">APAGAR</div>
-                <button onclick="publicarMapa
+                <button onclick="publicarMapa()" style="background:#0f0; border:none; padding:10px; border-radius:5px; font-weight:bold; margin-top:10px;">POSTAR</button>
+                <button onclick="mudarTela('screen-menu')" style="background:#444; color:white; border:none; padding:5px; margin-top:5px;">SAIR</button>
+            </div>
+            <div id="grid-canvas"></div>
+        </div>
+    </div>
+
+    <div id="screen-ranking" class="screen hidden">
+        <h2 style="color:var(--yellow)">🏆 TOP PLAYERS</h2>
+        <table id="rank-table"><tbody></tbody></table>
+        <button class="menu-button btn-cyan" onclick="mudarTela('screen-menu')" style="margin-top:20px">VOLTAR</button>
+    </div>
+
+    <div id="screen-gallery" class="screen hidden">
+        <h2>MAPAS DA GALERA</h2>
+        <div id="levels-list" style="width:90%"></div>
+        <button class="menu-button btn-cyan" onclick="mudarTela('screen-menu')">VOLTAR</button>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+        <h3 style="color:var(--red)">PAINEL DO DONO</h3>
+        <button onclick="addMoedas(50000)" style="width:100%; padding:10px; margin-bottom:5px;">+50.000 MOEDAS</button>
+        <button onclick="resetarTudo()" style="width:100%; padding:10px; background:red; color:white;">LIMPAR TUDO</button>
+        <button onclick="toggleAdmin()" style="margin-top:15px;">FECHAR</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o",
+            authDomain: "bolachamakergame.firebaseapp.com",
+            databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com",
+            projectId: "bolachamakergame",
+            appId: "1:207720367456:web:1a58957162be2b080f4a05"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let nick = localStorage.getItem('maker_nick') || prompt("Qual seu Nick?");
+        if(!nick) nick = "Player" + Math.floor(Math.random()*100);
+        localStorage.setItem('maker_nick', nick);
+
+        let moedas = parseInt(localStorage.getItem('maker_moedas')) || 7475;
+        let toolAtual = 'block';
+
+        function syncUI() {
+            document.getElementById('display-nick').innerHTML = nick + (nick.toLowerCase() === 'bolacha' ? '<span class="badge-dono">DONO</span>' : '');
+            document.getElementById('coins').innerText = moedas;
+            if(nick.toLowerCase() === 'bolacha') document.getElementById('admin-btn').classList.remove('hidden');
+            localStorage.setItem('maker_moedas', moedas);
+            db.ref('ranking/' + nick).set({moedas: moedas});
+        }
+
+        function mudarTela(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'screen-editor') gerarGrid();
+        }
+
+        function gerarGrid() {
+            const grid = document.getElementById('grid-canvas'); grid.innerHTML = '';
+            for(let i=0; i<300; i++) {
+                const c = document.createElement('div'); c.className = 'cell';
+                c.onclick = () => {
+                    if(toolAtual === 'sell') { c.className = 'cell'; c.innerText = ''; }
+                    else { 
+                        c.className = 'cell b-' + toolAtual;
+                        if(toolAtual === 'spawn') c.innerText = '👤';
+                        if(toolAtual === 'flag') c.innerText = '🚩';
+                    }
+                };
+                grid.appendChild(c);
+            }
+        }
+
+        function setTool(t) {
+            toolAtual = t;
+            document.querySelectorAll('.tool').forEach(el => el.classList.remove('active'));
+            if(document.getElementById('t-'+t)) document.getElementById('t-'+t).classList.add('active');
+        }
+
+        function abrirRanking() {
+            mudarTela('screen-ranking');
+            db.ref('ranking').orderByChild('moedas').limitToLast(10).on('value', snap => {
+                let html = "";
+                let lista = [];
+                snap.forEach(p => { lista.push({n: p.key, m: p.val().moedas}) });
+                lista.reverse().forEach((p, i) => {
+                    html += `<tr><td>#${i+1}</td><td>${p.n}</td><td style="color:var(--cyan)">💰 ${p.m}</td></tr>`;
+                });
+                document.querySelector('#rank-table tbody').innerHTML = html;
+            });
+        }
+
+        function abrirGaleria() {
+            mudarTela('screen-gallery');
+            db.ref('mapas').once('value', snap => {
+                const list = document.getElementById('levels-list'); list.innerHTML = '';
+                snap.forEach(m => {
+                    const btn = document.createElement('button');
+                    btn.className = 'menu-button btn-purple';
+                    btn.innerText = "MAPA DE " + m.val().autor;
+                    list.appendChild(btn);
+                });
+            });
+        }
+
+        function publicarMapa() {
+            let dados = [];
+            document.querySelectorAll('.cell').forEach((c, i) => { if(c.className !== 'cell') dados.push({id: i, cl: c.className}) });
+            db.ref('mapas').push({autor: nick, dados: dados});
+            alert("Mapa Publicado!");
+            mudarTela('screen-menu');
+        }
+
+        function toggleAdmin() { document.getElementById('admin-panel').classList.toggle('hidden'); }
+        function addMoedas(v) { moedas += v; syncUI(); }
+        function resetarTudo() { if(confirm("Apagar RANKING?")) db.ref('ranking').remove(); }
+
+        syncUI();
+    </script>
+</body>
+</html>
