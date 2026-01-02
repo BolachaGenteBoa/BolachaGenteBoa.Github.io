@@ -3,42 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V18 RANKING RESTORED</title>
+    <title>BOLACHA MAKER - V20 INFLATION</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --ice: #a0e9ff; --sand: #e1c16e; --spring: #50ff50; --bg: #050510; }
+        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --ice: #a0e9ff; --sand: #e1c16e; --spring: #50ff50; --bg: #050510; --dark: #080818; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
         
-        #header { background: #0a0a20; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
-        #main-content { height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; }
+        #header { background: #0a0a20; height: 50px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
+        #main-content { height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; }
         
-        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 450px; text-align: center; }
-        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; }
+        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 25px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; letter-spacing: 1px; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); transform: scale(1.02); }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
-        .btn-yellow { background: var(--yellow); color: #000; }
+        .btn-shop { background: var(--yellow); color: #000; }
         .btn-red { background: var(--red); color: #fff; }
 
-        /* TABELA DE RANKING */
-        #rank-list { max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 10px; margin: 10px 0; padding: 5px; }
-        .rank-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #222; font-size: 14px; }
+        #rank-list, #m-list { max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; margin: 10px 0; padding: 5px; text-align: left; }
+        .rank-item, .map-item { padding: 8px; border-bottom: 1px solid #222; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .map-item button { margin: 0; flex-grow: 1; margin-right: 5px; }
 
-        /* EDITOR E BLOCOS */
-        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; flex-grow: 1; }
-        .cell { width: 40px; height: 40px; border: 1px solid #222; }
-        .locked { opacity: 0.2; filter: grayscale(1); }
+        #editor-wrapper { display: flex; width: 100%; height: 100%; }
+        #editor-sidebar { width: 140px; background: var(--dark); border-right: 2px solid var(--purple); display: flex; flex-direction: column; overflow-y: auto; padding: 10px; gap: 8px; }
+        #editor-grid { flex-grow: 1; display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; cursor: crosshair; }
+        
+        .tool-btn { 
+            padding: 10px; border: 1px solid #333; background: #222; color: #aaa; 
+            text-align: left; font-size: 11px; cursor: pointer; border-radius: 5px;
+            display: flex; flex-direction: column; 
+        }
+        .tool-btn b { font-size: 13px; display: block; margin-bottom: 2px; color: #fff; }
+        .tool-btn.active { border-color: var(--cyan); background: rgba(0, 242, 255, 0.1); color: var(--cyan); }
+        .tool-btn.active b { color: var(--cyan); }
+
+        .cell { width: 40px; height: 40px; border: 1px solid #1a1a1a; }
         #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 6px; z-index: 99; }
         .obj { position: absolute; width: 40px; height: 40px; }
-        .block { background: #444; border: 2px solid #555; }
-        .lava { background: var(--red); box-shadow: 0 0 10px var(--red); }
-        .ice { background: var(--ice); border: 1px solid #fff; }
+        
+        .block { background: #555; border: 2px solid #333; }
+        .lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
+        .ice { background: var(--ice); border: 1px solid #fff; opacity: 0.8; }
         .spring { background: var(--spring); border-top: 5px solid #fff; }
-        .sand { background: var(--sand); opacity: 0.8; }
-        .ghost { background: #444; opacity: 0.4; border: 1px dashed #fff; }
-        .spawn { border: 2px dashed var(--cyan); background: rgba(0, 242, 255, 0.1); }
+        .sand { background: var(--sand); opacity: 0.9; }
+        .ghost { background: #333; opacity: 0.3; border: 1px dashed #fff; }
+        .spawn { border: 2px dashed var(--cyan); background: rgba(0, 242, 255, 0.2); }
         .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+        .cost-float { position: fixed; color: var(--red); font-weight: bold; pointer-events: none; animation: floatUp 0.8s forwards; font-size: 12px; z-index: 2000; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
     </style>
 </head>
 <body>
@@ -46,19 +61,20 @@
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">ADM</button>
+        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:10px;">ADM</button>
     </div>
 
     <div id="main-content"></div>
 
     <div id="adm-panel" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; display:flex; align-items:center; justify-content:center;">
         <div class="menu-card" style="border-color: var(--red);">
-            <h2 style="color:var(--red);">ADMIN PANEL</h2>
-            <input type="text" id="target-n" placeholder="Nick do Alvo" style="width:80%; padding:10px; margin:5px; border-radius:5px;">
-            <input type="number" id="target-v" placeholder="Valor Moedas" style="width:80%; padding:10px; margin:5px; border-radius:5px;">
+            <h2 style="color:var(--red); margin:0;">ADMIN</h2>
+            <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
+            <input type="text" id="target-n" placeholder="Nick" style="width:90%; padding:10px; margin:5px; background:#000; color:#fff; border:1px solid #555;">
+            <input type="number" id="target-v" placeholder="Valor" style="width:90%; padding:10px; margin:5px; background:#000; color:#fff; border:1px solid #555;">
             <button class="btn btn-cyan" onclick="admAddMoedas()">DAR MOEDAS</button>
-            <button class="btn btn-red" onclick="admBanir()">BANIR JOGADOR</button>
-            <button class="btn" style="background:#fff; color:#000;" onclick="document.getElementById('adm-panel').classList.add('hidden')">VOLTAR</button>
+            <button class="btn btn-red" onclick="admBanir()">BANIR</button>
+            <button class="btn" onclick="document.getElementById('adm-panel').classList.add('hidden')">FECHAR</button>
         </div>
     </div>
 
@@ -74,7 +90,7 @@
         const db = firebase.database();
 
         let nick = localStorage.getItem('maker_nick') || prompt("Seu Nick:");
-        if(!nick) nick = "Player" + Math.floor(Math.random()*99);
+        if(!nick) nick = "Guest" + Math.floor(Math.random()*999);
         localStorage.setItem('maker_nick', nick);
 
         let moedas = 0;
@@ -83,188 +99,111 @@
         let keys = {};
         let pX=0, pY=0, vX=0, vY=0, noChao=false, noGelo=false, noSand=false, blocosAtuais=[];
 
+        // --- PREÇOS DOBRADOS ---
+        const custosConstrucao = {
+            'block': 4,
+            'lava': 10,
+            'ice': 20,
+            'sand': 20,
+            'spring': 30,
+            'ghost': 30,
+            'spawn': 0,
+            'flag': 0,
+            'erase': 0
+        };
+
         window.onkeydown=(e)=>keys[e.code]=true;
         window.onkeyup=(e)=>keys[e.code]=false;
 
         function setup() {
-            db.ref('bans/' + nick).on('value', s => { if(s.val()) document.body.innerHTML = "<h1 style='color:red; text-align:center;'>BANIDO!</h1>"; });
+            db.ref('bans/' + nick).on('value', s => { if(s.val()) document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20%'>BANIDO</h1>"; });
             
             db.ref('ranking/' + nick).on('value', s => {
                 if(!s.exists()) db.ref('ranking/' + nick).set({ moedas: 500, inventario: { block: true, spawn: true, flag: true } });
                 else {
                     let d = s.val();
-                    moedas = d.moedas || 0;
+                    moedas = (d.moedas && isFinite(d.moedas)) ? d.moedas : 500;
                     inventario = d.inventario || { block: true, spawn: true, flag: true };
                     document.getElementById('coins').innerText = Math.floor(moedas);
                 }
             });
 
             if(nick.toLowerCase() === 'bolacha') document.getElementById('adm-btn').classList.remove('hidden');
-            document.getElementById('display-nick').innerText = nick;
+            document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
             telaMenu();
-        }
-
-        // TELA DE RANKING
-        function telaRanking() {
-            document.getElementById('main-content').innerHTML = `
-                <div class="menu-card">
-                    <h2>🏆 TOP RICOS</h2>
-                    <div id="rank-list">Carregando...</div>
-                    <button class="btn btn-purple" onclick="telaMenu()">VOLTAR</button>
-                </div>
-            `;
-            db.ref('ranking').orderByChild('moedas').limitToLast(10).once('value', s => {
-                let list = [];
-                s.forEach(child => { list.push({n: child.key, m: child.val().moedas}); });
-                list.sort((a,b) => b.m - a.m);
-                let html = list.map((u, i) => `
-                    <div class="rank-item" style="${u.n === nick ? 'color:var(--cyan); font-weight:bold;' : ''}">
-                        <span>#${i+1} ${u.n}</span>
-                        <span>💰 ${Math.floor(u.m)}</span>
-                    </div>
-                `).join('');
-                document.getElementById('rank-list').innerHTML = html || "Ninguém no rank ainda.";
-            });
         }
 
         function telaMenu() {
             gameActive = false;
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
-                    <h1 style="color:var(--cyan); margin-top:0;">BOLACHA MAKER</h1>
-                    <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR NÍVEIS</button>
-                    <button class="btn btn-purple" onclick="telaEditor()">CRIAR MAPA</button>
-                    <button class="btn btn-yellow" onclick="telaLoja()">LOJA DE BLOCOS</button>
-                    <button class="btn" style="background:#444; color:#fff;" onclick="telaRanking()">VER RANKING</button>
+                    <h1 style="color:var(--cyan); margin:0; letter-spacing:2px;">BOLACHA</h1>
+                    <h3 style="color:var(--purple); margin-top:0;">MAKER V20 (INFLATION)</h3>
+                    <button class="btn btn-cyan" onclick="telaGaleria()">▶ JOGAR NÍVEIS</button>
+                    <button class="btn btn-purple" onclick="telaEditor()">🛠 CRIAR MAPA</button>
+                    <button class="btn btn-shop" onclick="telaLoja()">🛒 LOJA (LICENÇAS)</button>
+                    <button class="btn" style="background:#222; color:#aaa;" onclick="telaRanking()">🏆 RANKING</button>
                 </div>
             `;
         }
 
-        // --- LOJA, EDITOR E GAMEPLAY ---
-        function telaLoja() {
-            const itens = [{id:'lava', n:'Lava', p:400},{id:'ice', n:'Gelo', p:500},{id:'spring', n:'Mola', p:800},{id:'sand', n:'Areia', p:600},{id:'ghost', n:'Fantasma', p:1000}];
-            let html = `<h2>LOJA</h2><div style="max-height:250px; overflow-y:auto;">`;
-            itens.forEach(i => {
-                let jaTem = inventario[i.id];
-                html += `<button class="btn" style="background:${jaTem?'#333':'var(--purple)'}" onclick="${jaTem?'':'comprarItem(\''+i.id+'\','+i.p+')'}">${i.n} ${jaTem?'(OK)':'(💰'+i.p+')'}</button>`;
+        function telaRanking() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="menu-card">
+                    <h2>RANKING</h2>
+                    <div id="rank-list">Carregando...</div>
+                    <button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button>
+                </div>
+            `;
+            db.ref('ranking').orderByChild('moedas').limitToLast(15).once('value', s => {
+                let list = [];
+                s.forEach(c => list.push({n: c.key, m: c.val().moedas}));
+                list.sort((a,b) => b.m - a.m);
+                document.getElementById('rank-list').innerHTML = list.map((u, i) => `
+                    <div class="rank-item" style="${u.n===nick?'color:var(--cyan)':''}">
+                        <span>#${i+1} ${u.n}</span>
+                        <span>💰 ${Math.floor(u.m)}</span>
+                    </div>
+                `).join('');
             });
-            document.getElementById('main-content').innerHTML = `<div class="menu-card">${html}</div><button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button></div>`;
         }
 
-        function comprarItem(id, preco) {
-            if(moedas >= preco) {
-                db.ref('ranking/'+nick+'/moedas').transaction(c => c - preco);
-                db.ref('ranking/'+nick+'/inventario/'+id).set(true);
-                alert("Bloco liberado!"); telaLoja();
-            } else alert("Sem moedas!");
+        function telaLoja() {
+            // --- PREÇOS DOBRADOS NA LOJA ---
+            const itens = [
+                {id:'lava', n:'Lava', p:800}, 
+                {id:'ice', n:'Gelo', p:1000},
+                {id:'spring', n:'Mola', p:1600}, 
+                {id:'sand', n:'Areia', p:1200},
+                {id:'ghost', n:'Fantasma', p:2000}
+            ];
+            let h = `<h2>LOJA (PREÇOS x2)</h2><div style="max-height:220px; overflow-y:auto; text-align:left;">`;
+            itens.forEach(i => {
+                let ok = inventario[i.id];
+                h += `<button class="btn" style="background:${ok?'#222':'var(--purple)'}; color:${ok?'#555':'#fff'}" onclick="${ok?'':'comprarItem(\''+i.id+'\','+i.p+')'}">
+                    ${i.n} ${ok ? '✔' : `(💰 ${i.p})`}
+                </button>`;
+            });
+            h += `</div><button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card">${h}</div>`;
+        }
+
+        function comprarItem(id, p) {
+            if(moedas >= p) {
+                db.ref('ranking/'+nick).update({
+                    moedas: moedas - p,
+                    [`inventario/${id}`]: true
+                });
+                alert("Licença adquirida!"); telaLoja();
+            } else alert("Falta grana!");
         }
 
         let tool = 'block';
-        function setTool(t) { if(inventario[t]) tool = t; else alert("Compre na loja!"); }
-
+        
         function telaEditor() {
             document.getElementById('main-content').innerHTML = `
-                <div id="editor-grid"></div>
-                <div style="height:90px; background:#0a0a20; display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; padding:4px; width:100%;">
-                    <button onclick="setTool('block')" class="block"></button>
-                    <button onclick="setTool('spawn')" class="spawn"></button>
-                    <button onclick="setTool('flag')" class="flag"></button>
-                    <button onclick="setTool('lava')" class="lava ${inventario.lava?'':'locked'}"></button>
-                    <button onclick="setTool('ice')" class="ice ${inventario.ice?'':'locked'}"></button>
-                    <button onclick="setTool('spring')" class="spring ${inventario.spring?'':'locked'}"></button>
-                    <button onclick="setTool('sand')" class="sand ${inventario.sand?'':'locked'}"></button>
-                    <button onclick="setTool('ghost')" class="ghost ${inventario.ghost?'':'locked'}"></button>
-                    <button onclick="tool='erase'" style="background:red; color:white; font-size:10px;">APAGAR</button>
-                    <button onclick="salvar()" class="btn-cyan" style="font-size:10px;">SALVAR</button>
-                    <button onclick="telaMenu()" class="btn-purple" style="font-size:10px;">SAIR</button>
-                </div>
-            `;
-            const g = document.getElementById('editor-grid');
-            for(let i=0; i<1800; i++) {
-                const c = document.createElement('div'); c.className = 'cell';
-                c.onmousedown=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
-                c.onmouseenter=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
-                g.appendChild(c);
-            }
-        }
-
-        function salvar() {
-            let d = []; document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
-            if(!d.some(x => x.cl.includes('spawn')) || !d.some(x => x.cl.includes('flag'))) return alert("Falta Spawn ou Bandeira!");
-            db.ref('mapas').push({autor: nick, dados: d}); alert("Publicado!"); telaMenu();
-        }
-
-        function telaGaleria() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list" style="max-height:250px; overflow-y:auto;"></div><button class="btn btn-purple" onclick="telaMenu()">VOLTAR</button></div>`;
-            db.ref('mapas').once('value', s => {
-                s.forEach(m => {
-                    let div = document.createElement('div'); div.style.display="flex"; div.style.gap="5px";
-                    let b = document.createElement('button'); b.className = "btn btn-cyan"; b.innerText = "MAPA DE: " + m.val().autor;
-                    b.onclick = () => iniciar(m.val().dados);
-                    div.appendChild(b);
-                    if(nick.toLowerCase() === 'bolacha') {
-                        let del = document.createElement('button'); del.innerText = "X"; del.className="btn-red"; del.style.width="40px";
-                        del.onclick = () => { db.ref('mapas/'+m.key).remove(); telaGaleria(); };
-                        div.appendChild(del);
-                    }
-                    document.getElementById('m-list').appendChild(div);
-                });
-            });
-        }
-
-        function iniciar(dados) {
-            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
-            blocosAtuais = dados;
-            dados.forEach(d => {
-                let x = (d.id % 60) * 40; let y = Math.floor(d.id / 60) * 40;
-                const o = document.createElement('div'); o.className = 'obj ' + d.cl.replace('cell ', '');
-                o.style.left = x + 'px'; o.style.top = y + 'px';
-                document.getElementById('objs').appendChild(o);
-                if(d.cl.includes('spawn')) { pX = x + 5; pY = y + 5; }
-            });
-            vX = 0; vY = 0; gameActive = true; loop();
-        }
-
-        function loop() {
-            if(!gameActive) return;
-            let accel = noGelo ? 0.3 : (noSand ? 0.2 : 1.2);
-            let friction = noGelo ? 0.98 : (noSand ? 0.6 : 0.8);
-            if(keys['KeyA'] || keys['ArrowLeft']) vX -= accel; else if(keys['KeyD'] || keys['ArrowRight']) vX += accel; else vX *= friction;
-            vX = Math.max(-8, Math.min(8, vX));
-            if((keys['Space'] || keys['KeyW']) && noChao && !noSand) { vY = -14; noChao = false; }
-            vY += noSand ? 0.2 : 0.8; pX += vX;
-            blocosAtuais.forEach(d => {
-                let bx = (d.id % 60) * 40; let by = Math.floor(d.id / 60) * 40;
-                if((d.cl.includes('block') || d.cl.includes('ice') || d.cl.includes('spring')) && pX < bx + 35 && pX + 25 > bx && pY < by + 35 && pY + 25 > by) { pX -= vX; vX = 0; }
-            });
-            pY += vY; noChao = false; noGelo = false; noSand = false;
-            blocosAtuais.forEach(d => {
-                let bx = (d.id % 60) * 40; let by = Math.floor(d.id / 60) * 40;
-                if(pX < bx + 35 && pX + 25 > bx && pY < by + 35 && pY + 25 > by) {
-                    if(d.cl.includes('block') || d.cl.includes('ice') || d.cl.includes('spring')) {
-                        if(vY > 0) { pY = by - 30; if(d.cl.includes('spring')) vY = -22; else { vY = 0; noChao = true; } if(d.cl.includes('ice')) noGelo = true; }
-                        else if(vY < 0) { pY = by + 40; vY = 0; }
-                    }
-                    if(d.cl.includes('sand')) noSand = true;
-                    if(d.cl.includes('lava')) { gameActive=false; alert("MORREU!"); telaMenu(); }
-                    if(d.cl.includes('flag')) { gameActive=false; db.ref('ranking/'+nick+'/moedas').transaction(c => (c || 0) + 100); alert("VITÓRIA! +100 moedas"); telaMenu(); }
-                }
-            });
-            if(pY > 1500) { gameActive=false; alert("CAIU!"); telaMenu(); }
-            document.getElementById('world').style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
-            document.getElementById('player').style.left = pX + 'px'; document.getElementById('player').style.top = pY + 'px';
-            requestAnimationFrame(loop);
-        }
-
-        function admAddMoedas() {
-            let t = document.getElementById('target-n').value; let v = parseInt(document.getElementById('target-v').value);
-            db.ref('ranking/'+t+'/moedas').transaction(c => (c || 0) + v); alert("Feito!");
-        }
-        function admBanir() {
-            let t = document.getElementById('target-n').value; db.ref('bans/'+t).set(true); alert("Banido!");
-        }
-
-        setup();
-    </script>
-</body>
-</html>
+                <div id="editor-wrapper">
+                    <div id="editor-sidebar">
+                        <div style="font-size:12px; color:#aaa; text-align:center; margin-bottom:5px;">FERRAMENTAS</div>
+                        ${renderToolBtn('block', 'BLOCO', custosConstrucao.block)}
+                        ${renderToolBtn('
