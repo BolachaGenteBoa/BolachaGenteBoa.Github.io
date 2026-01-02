@@ -3,45 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V22 STABLE</title>
+    <title>BOLACHA MAKER - V24 PHYSICS FIX</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --ice: #a0e9ff; --sand: #e1c16e; --spring: #50ff50; --bg: #050510; --dark: #080818; }
+        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
         #header { background: #0a0a20; height: 50px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
-        #main-content { height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 25px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; letter-spacing: 1px; transition: 0.2s; }
+        #main-content { height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; }
+        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
-        .btn-shop { background: var(--yellow); color: #000; }
+        
+        /* RANKING */
+        #rank-box { background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin: 10px 0; max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; }
+        .rank-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #222; }
+
+        /* EDITOR */
         #editor-wrapper { display: flex; width: 100%; height: 100%; }
-        #editor-sidebar { width: 150px; background: var(--dark); border-right: 2px solid var(--purple); display: flex; flex-direction: column; overflow-y: auto; padding: 10px; gap: 8px; z-index: 10; }
+        #editor-sidebar { width: 160px; background: #080818; border-right: 2px solid var(--purple); display: flex; flex-direction: column; overflow-y: auto; padding: 10px; gap: 8px; }
         #editor-grid { flex-grow: 1; display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; cursor: crosshair; position: relative; }
-        .tool-btn { padding: 10px; border: 1px solid #333; background: #222; color: #aaa; text-align: left; font-size: 11px; cursor: pointer; border-radius: 5px; }
-        .tool-btn b { font-size: 13px; display: block; color: #fff; }
-        .tool-btn.active { border-color: var(--cyan); background: rgba(0, 242, 255, 0.1); color: var(--cyan); }
+        .tool-btn { padding: 8px; border: 1px solid #333; background: #222; color: #fff; font-size: 11px; cursor: pointer; border-radius: 5px; }
+        .tool-btn.active { border-color: var(--cyan); background: rgba(0, 242, 255, 0.1); }
+
+        /* JOGO */
         .cell { width: 40px; height: 40px; border: 1px solid #1a1a1a; box-sizing: border-box; }
-        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 6px; z-index: 99; pointer-events: none; transition: opacity 0.2s; }
-        .obj { position: absolute; width: 40px; height: 40px; box-sizing: border-box; }
+        #player { position: absolute; width: 28px; height: 28px; background: var(--cyan); border: 2px solid #fff; border-radius: 4px; z-index: 99; }
+        .obj { position: absolute; width: 40px; height: 40px; }
         .block { background: #555; border: 2px solid #333; }
-        .lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
-        .ice { background: var(--ice); border: 1px solid #fff; opacity: 0.8; }
-        .spring { background: var(--spring); border-top: 5px solid #fff; }
-        .sand { background: var(--sand); opacity: 0.9; }
-        .spawn { border: 2px dashed var(--cyan); background: rgba(0, 242, 255, 0.2); }
+        .lava { background: var(--red); }
+        .ice { background: #a0e9ff; border: 1px solid #fff; opacity: 0.8; }
+        .spring { background: #50ff50; border-top: 5px solid #fff; }
+        .sand { background: #e1c16e; opacity: 0.8; }
+        .ghost { background: #333; opacity: 0.3; border: 1px dashed #fff; }
+        .spawn { border: 2px dashed var(--cyan); }
         .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+        /* TELA DE MORTE */
+        #death-screen { position: fixed; inset: 0; background: rgba(255,0,0,0.3); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     </style>
 </head>
 <body>
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">ADM</button>
     </div>
     <div id="main-content"></div>
+
+    <div id="death-screen" class="hidden">
+        <div class="menu-card" style="border-color: red;">
+            <h1 style="color:red">VOCÊ MORREU!</h1>
+            <button class="btn btn-cyan" onclick="reiniciarFase()">REENTRAR</button>
+            <button class="btn btn-purple" onclick="telaMenu()">MENU</button>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -59,38 +76,48 @@
         
         let moedas = 0, inventario = { block: true, spawn: true, flag: true }, gameActive = false, keys = {};
         let pX=0, pY=0, vX=0, vY=0, noChao=false, noGelo=false, noSand=false, blocosAtuais=[];
-        const custos = { 'block':4, 'lava':10, 'ice':20, 'sand':20, 'spring':30, 'spawn':0, 'flag':0, 'erase':0 };
+        const custos = { 'block':4, 'lava':10, 'ice':20, 'sand':20, 'spring':30, 'ghost':30, 'spawn':0, 'flag':0, 'erase':0 };
 
         window.onkeydown=(e)=>keys[e.code]=true; window.onkeyup=(e)=>keys[e.code]=false;
 
         function setup() {
             db.ref('ranking/' + nick).on('value', s => {
-                let d = s.val() || { moedas: 500, inventario: { block: true, spawn: true, flag: true } };
-                moedas = (isFinite(d.moedas)) ? d.moedas : 500;
+                let d = s.val() || { moedas: 500 };
+                moedas = isFinite(d.moedas) ? d.moedas : 500;
                 inventario = d.inventario || { block: true, spawn: true, flag: true };
-                // Garante que spawn e flag estejam sempre liberados
-                inventario.spawn = true; inventario.flag = true;
+                inventario.block = true; inventario.spawn = true; inventario.flag = true;
                 document.getElementById('coins').innerText = Math.floor(moedas);
             });
-            if(nick.toLowerCase() === 'bolacha') document.getElementById('adm-btn').classList.remove('hidden');
             document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
             telaMenu();
         }
 
         function telaMenu() {
             gameActive = false;
+            document.getElementById('death-screen').classList.add('hidden');
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
-                    <h1>BOLACHA MAKER</h1>
+                    <h1 style="color:var(--cyan); margin:0">BOLACHA MAKER</h1>
+                    <div id="rank-box">Carregando Ranking...</div>
                     <button class="btn btn-cyan" onclick="telaGaleria()">▶ JOGAR</button>
                     <button class="btn btn-purple" onclick="telaEditor()">🛠 CRIAR</button>
-                    <button class="btn btn-shop" onclick="telaLoja()">🛒 LOJA</button>
+                    <button class="btn" style="background:var(--yellow); color:black" onclick="telaLoja()">🛒 LOJA</button>
                 </div>
             `;
+            // Atualiza Ranking
+            db.ref('ranking').orderByChild('moedas').limitToLast(5).once('value', s => {
+                let h = "<b>🏆 TOP PLAYERS</b><br>";
+                let list = [];
+                s.forEach(u => { list.push({n: u.key, m: u.val().moedas}) });
+                list.reverse().forEach((u, i) => {
+                    h += `<div class="rank-line"><span>${i+1}. ${u.n}</span><span>$${Math.floor(u.m)}</span></div>`;
+                });
+                document.getElementById('rank-box').innerHTML = h;
+            });
         }
 
         function telaLoja() {
-            const itens = [{id:'lava', n:'Lava', p:800}, {id:'ice', n:'Gelo', p:1000}, {id:'spring', n:'Mola', p:1600}, {id:'sand', n:'Areia', p:1200}];
+            const itens = [{id:'lava', n:'Lava', p:800}, {id:'ice', n:'Gelo', p:1000}, {id:'spring', n:'Mola', p:1600}, {id:'sand', n:'Areia', p:1200}, {id:'ghost', n:'Fantasma', p:2000}];
             let h = `<h2>LOJA</h2>`;
             itens.forEach(i => {
                 let ok = inventario[i.id];
@@ -100,20 +127,22 @@
             document.getElementById('main-content').innerHTML = `<div class="menu-card">${h}</div>`;
         }
 
-        function comprar(id, p) {
-            if(moedas >= p) { db.ref('ranking/'+nick).update({ moedas: moedas - p, [`inventario/${id}`]: true }); alert("Liberado!"); telaLoja(); }
-        }
+        function comprar(id, p) { if(moedas >= p) { db.ref('ranking/'+nick).update({ moedas: moedas - p, [`inventario/${id}`]: true }); alert("Liberado!"); telaLoja(); } }
 
         let tool = 'block';
         function telaEditor() {
             document.getElementById('main-content').innerHTML = `
                 <div id="editor-wrapper">
                     <div id="editor-sidebar">
-                        ${renderTool('block','BLOCO',4)} ${renderTool('spawn','SPAWN',0)} ${renderTool('flag','FINAL',0)}
-                        ${renderTool('lava','LAVA',10)} ${renderTool('ice','GELO',20)} ${renderTool('spring','MOLA',30)}
-                        ${renderTool('sand','AREIA',20)}
-                        <div class="tool-btn" id="btn-erase" onclick="tool='erase';upd()"><b>APAGAR</b></div>
-                        <button class="btn btn-cyan" onclick="salvar()">SALVAR</button>
+                        <div class="tool-btn active" id="btn-block" onclick="setT('block')">BLOCO ($4)</div>
+                        <div class="tool-btn" id="btn-spawn" onclick="setT('spawn')">SPAWN ($0)</div>
+                        <div class="tool-btn" id="btn-flag" onclick="setT('flag')">FINAL ($0)</div>
+                        ${inventario.lava ? '<div class="tool-btn" id="btn-lava" onclick="setT(\'lava\')">LAVA</div>' : ''}
+                        ${inventario.ice ? '<div class="tool-btn" id="btn-ice" onclick="setT(\'ice\')">GELO</div>' : ''}
+                        ${inventario.spring ? '<div class="tool-btn" id="btn-spring" onclick="setT(\'spring\')">MOLA</div>' : ''}
+                        ${inventario.ghost ? '<div class="tool-btn" id="btn-ghost" onclick="setT(\'ghost\')">FANTASMA</div>' : ''}
+                        <div class="tool-btn" style="color:red" onclick="setT('erase')">APAGAR</div>
+                        <button class="btn btn-cyan" onclick="salvar()" style="margin-top:auto">SALVAR</button>
                         <button class="btn btn-purple" onclick="telaMenu()">SAIR</button>
                     </div>
                     <div id="editor-grid"></div>
@@ -125,20 +154,12 @@
                 c.onmousedown=(e)=>{if(e.buttons===1)pintar(c)}; c.onmouseenter=(e)=>{if(e.buttons===1)pintar(c)};
                 g.appendChild(c);
             }
-            upd();
         }
-
-        function renderTool(id, n, c) {
-            let lock = !inventario[id];
-            return `<div class="tool-btn ${lock?'locked':''}" id="btn-${id}" onclick="if(!${lock}){tool='${id}';upd()}"><b>${n}</b> $${c}</div>`;
-        }
-
-        function upd() { document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById('btn-'+tool).classList.add('active'); }
+        function setT(t){ tool=t; document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); }
 
         function pintar(c) {
-            if(c.classList.contains(tool)) return;
             if(tool==='erase') { c.className='cell'; return; }
-            if(moedas >= custos[tool]) {
+            if(moedas >= custos[tool] && !c.classList.contains(tool)) {
                 moedas -= custos[tool]; db.ref('ranking/'+nick+'/moedas').set(moedas);
                 c.className = 'cell '+tool;
             }
@@ -146,55 +167,76 @@
 
         function salvar() {
             let d = []; document.querySelectorAll('.cell').forEach((c,i)=>{ if(c.classList.length>1) d.push({id:i, cl:c.className}); });
-            if(!d.some(x=>x.cl.includes('spawn'))) return alert("Coloque um SPAWN!");
+            if(!d.some(x=>x.cl.includes('spawn'))) return alert("Falta o SPAWN!");
             db.ref('mapas').push({autor:nick, dados:d}); alert("Publicado!"); telaMenu();
         }
 
         function telaGaleria() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list"></div><button class="btn btn-purple" onclick="telaMenu()">VOLTAR</button></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list" style="max-height:300px; overflow-y:auto;"></div><button class="btn btn-purple" onclick="telaMenu()">VOLTAR</button></div>`;
             db.ref('mapas').once('value', s => {
                 s.forEach(m => {
-                    let btn = document.createElement('button'); btn.className="btn btn-cyan"; btn.innerText=m.val().autor;
-                    btn.onclick=()=>iniciar(m.val().dados);
-                    document.getElementById('m-list').appendChild(btn);
+                    let b = document.createElement('button'); b.className="btn btn-cyan"; b.innerText=m.val().autor;
+                    b.onclick=()=>iniciar(m.val().dados);
+                    document.getElementById('m-list').appendChild(b);
                 });
             });
         }
 
         function iniciar(d) {
+            document.getElementById('death-screen').classList.add('hidden');
             document.getElementById('main-content').innerHTML = `<div id="game-view" style="width:100%; height:100%; position:relative;"><div id="world" style="position:absolute;"><div id="player"></div><div id="objs"></div></div></div>`;
-            blocosAtuais = d; pX = 400; pY = 400; // Padrão caso falhe
+            blocosAtuais = d; vX=0; vY=0; 
             d.forEach(b => {
                 let x=(b.id%60)*40, y=Math.floor(b.id/60)*40;
                 let o=document.createElement('div'); o.className='obj '+b.cl.replace('cell ',''); o.style.left=x+'px'; o.style.top=y+'px';
                 document.getElementById('objs').appendChild(o);
-                if(b.cl.includes('spawn')) { pX = x + 5; pY = y + 5; }
+                if(b.cl.includes('spawn')) { pX = x + 6; pY = y + 6; }
             });
-            vX=0; vY=0; gameActive=true; loop();
+            gameActive=true; loop();
         }
+
+        function reiniciarFase() { iniciar(blocosAtuais); }
 
         function loop() {
             if(!gameActive) return;
-            let acc=noGelo?0.3:1.2, fric=noGelo?0.98:0.8;
+            let acc=noGelo?0.3:1.2, fric=noGelo?0.99:0.8;
             if(keys['KeyA']||keys['ArrowLeft']) vX-=acc; else if(keys['KeyD']||keys['ArrowRight']) vX+=acc; else vX*=fric;
-            vY+=0.8; pX+=vX; pY+=vY; noChao=false; noGelo=false;
-            
-            blocosAtuais.forEach(b => {
-                let bx=(b.id%60)*40, by=Math.floor(b.id/60)*40;
-                if(pX<bx+35 && pX+25>bx && pY<by+35 && pY+25>by) {
-                    if(b.cl.includes('block')||b.cl.includes('ice')||b.cl.includes('spring')) {
-                        if(vY>0) { pY=by-30; vY=b.cl.includes('spring')?-22:0; noChao=true; if(b.cl.includes('ice'))noGelo=true; }
-                        else { vY=0; pY=by+40; }
-                    }
-                    if(b.cl.includes('lava')) { gameActive=false; alert("MORREU!"); telaMenu(); }
-                    if(b.cl.includes('flag')) { gameActive=false; db.ref('ranking/'+nick+'/moedas').transaction(c=>c+100); alert("VITÓRIA!"); telaMenu(); }
-                }
-            });
-            if(pY>2000) { gameActive=false; alert("CAIU!"); telaMenu(); }
+            if((keys['Space']||keys['KeyW'])&&noChao){vY=-13;noChao=false;}
+            vY+=0.8; 
+
+            // Movimento X com Colisão Lateral
+            pX += vX;
+            checkCol(true);
+            // Movimento Y com Colisão Vertical
+            pY += vY;
+            noChao=false; noGelo=false;
+            checkCol(false);
+
+            if(pY>1500) morrer();
             document.getElementById('world').style.transform = `translate(${window.innerWidth/2-pX}px, ${window.innerHeight/2-pY}px)`;
             document.getElementById('player').style.left=pX+'px'; document.getElementById('player').style.top=pY+'px';
             requestAnimationFrame(loop);
         }
+
+        function checkCol(isX) {
+            blocosAtuais.forEach(b => {
+                let bx=(b.id%60)*40, by=Math.floor(b.id/60)*40;
+                if(pX<bx+40 && pX+28>bx && pY<by+40 && pY+28>by) {
+                    if(b.cl.includes('block')||b.cl.includes('ice')||b.cl.includes('spring')) {
+                        if(isX) { pX-=vX; vX=0; }
+                        else {
+                            if(vY>0){ pY=by-28; vY=b.cl.includes('spring')?-22:0; noChao=true; if(b.cl.includes('ice'))noGelo=true; }
+                            else { pY=by+40; vY=0; }
+                        }
+                    }
+                    if(b.cl.includes('lava')) morrer();
+                    if(b.cl.includes('flag')) { gameActive=false; db.ref('ranking/'+nick+'/moedas').transaction(c=>c+100); alert("VITÓRIA! +$100"); telaMenu(); }
+                }
+            });
+        }
+
+        function morrer() { gameActive=false; document.getElementById('death-screen').classList.remove('hidden'); }
+
         setup();
     </script>
 </body>
