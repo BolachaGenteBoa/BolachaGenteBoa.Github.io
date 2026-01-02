@@ -154,4 +154,153 @@
                     <h1 style="color:var(--cyan); margin:0;">BOLACHA MAKER</h1>
                     <p style="color:#aaa; font-size:12px; margin-bottom:20px;">V11 - SISTEMA DE MODERAÇÃO</p>
                     <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR NÍVEIS</button>
-                    <button class
+                    <button class="btn btn-purple" onclick="telaEditor()">CRIAR MAPA</button>
+                    <button class="btn" style="background:#222; color:white;" onclick="telaRanking()">RANKING</button>
+                </div>
+            `;
+        }
+
+        function telaRanking() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="menu-card">
+                    <h2>🏆 RANKING</h2>
+                    <div id="rank-wrapper">
+                        <table>
+                            <thead><tr><th>#</th><th>PLAYER</th><th>MOEDAS</th></tr></thead>
+                            <tbody id="rank-body"></tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-cyan" onclick="setup()">VOLTAR</button>
+                </div>
+            `;
+            db.ref('ranking').once('value', s => {
+                let list = [];
+                s.forEach(c => { if(isFinite(c.val().moedas)) list.push({n: c.key, m: c.val().moedas}); });
+                list.sort((a,b) => b.m - a.m);
+                document.getElementById('rank-body').innerHTML = list.slice(0, 20).map((u, i) => `
+                    <tr style="${u.n === nick ? 'background:rgba(0,242,255,0.15)' : ''}">
+                        <td>${i+1}</td><td>${u.n}</td><td>💰 ${Math.floor(u.m)}</td>
+                    </tr>
+                `).join('');
+            });
+        }
+
+        function telaGaleria() {
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list" style="max-height:280px; overflow-y:auto;"></div><button class="btn btn-purple" onclick="setup()">VOLTAR</button></div>`;
+            db.ref('mapas').once('value', s => {
+                s.forEach(m => {
+                    let div = document.createElement('div');
+                    div.className = "map-item";
+                    
+                    let btnPlay = document.createElement('button');
+                    btnPlay.className = "btn btn-cyan";
+                    btnPlay.style.margin = "0";
+                    btnPlay.innerText = "MAPA DE: " + m.val().autor.toUpperCase();
+                    btnPlay.onclick = () => iniciar(m.val().dados);
+                    
+                    div.appendChild(btnPlay);
+
+                    if(isModerator) {
+                        let btnDel = document.createElement('button');
+                        btnDel.className = "btn-del";
+                        btnDel.innerText = "X";
+                        btnDel.onclick = () => excluirMapa(m.key);
+                        div.appendChild(btnDel);
+                    }
+                    
+                    document.getElementById('m-list').appendChild(div);
+                });
+            });
+        }
+
+        // --- EDITOR E GAMEPLAY MANTIDOS DA V10 ---
+        let tool = 'block';
+        function telaEditor() {
+            document.getElementById('main-content').innerHTML = `
+                <div id="editor-grid"></div>
+                <div style="height:75px; background:#0a0a20; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; border-top:2px solid var(--purple);">
+                    <button onclick="tool='block'" class="block" style="width:30px; height:30px;"></button>
+                    <button onclick="tool='lava'" class="lava" style="width:30px; height:30px;"></button>
+                    <button onclick="tool='spawn'" class="spawn" style="width:30px; height:30px;"></button>
+                    <button onclick="tool='flag'" class="flag" style="width:30px; height:30px;"></button>
+                    <button onclick="tool='erase'" style="background:red; color:white; width:30px; height:30px; font-weight:bold;">X</button>
+                    <button class="btn btn-cyan" style="width:100px; margin:0;" onclick="salvar()">SALVAR</button>
+                    <button class="btn btn-purple" style="width:80px; margin:0;" onclick="setup()">SAIR</button>
+                </div>
+            `;
+            const g = document.getElementById('editor-grid');
+            for(let i=0; i<1800; i++) {
+                const c = document.createElement('div'); c.className = 'cell';
+                c.onmousedown=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
+                c.onmouseenter=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
+                g.appendChild(c);
+            }
+        }
+
+        function salvar() {
+            let d = [];
+            document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
+            if(!d.some(x => x.cl.includes('spawn'))) return alert("COLOQUE UM SPAWN!");
+            db.ref('mapas').push({autor: nick, dados: d});
+            alert("Publicado!"); setup();
+        }
+
+        function iniciar(dados) {
+            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
+            blocosAtuais = [];
+            dados.forEach(d => {
+                let x = (d.id % 60) * 40; let y = Math.floor(d.id / 60) * 40;
+                const o = document.createElement('div');
+                o.className = 'obj ' + d.cl.replace('cell ', '');
+                o.style.left = x + 'px'; o.style.top = y + 'px';
+                document.getElementById('objs').appendChild(o);
+                if(d.cl.includes('spawn')) { pX = x + 5; pY = y + 5; }
+                if(!d.cl.includes('spawn')) blocosAtuais.push({x, y, type: d.cl});
+            });
+            vX = 0; vY = 0;
+            setTimeout(() => { gameActive = true; loop(); }, 300);
+        }
+
+        function loop() {
+            if(!gameActive) return;
+            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6; 
+            else if(keys['KeyD'] || keys['ArrowRight']) vX = 6; 
+            else vX *= 0.8;
+            if((keys['Space'] || keys['KeyW']) && noChao) { vY = -14; noChao = false; }
+            vY += 0.8;
+            pX += vX;
+            blocosAtuais.forEach(b => {
+                if(b.type.includes('block') && pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
+                    pX -= vX; vX = 0;
+                }
+            });
+            pY += vY;
+            noChao = false;
+            blocosAtuais.forEach(b => {
+                if(pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
+                    if(b.type.includes('block')) {
+                        if(vY > 0) { pY = b.y - 30; vY = 0; noChao = true; }
+                        else if(vY < 0) { pY = b.y + 40; vY = 0; }
+                    }
+                    if(b.type.includes('lava')) { gameActive=false; alert("MORREU!"); setup(); }
+                    if(b.type.includes('flag')) { 
+                        gameActive=false; 
+                        db.ref('ranking/'+nick).update({moedas: moedas + 100}); 
+                        alert("VITÓRIA!"); setup(); 
+                    }
+                }
+            });
+            if(pY > 1500) { gameActive=false; alert("LIMBO!"); setup(); }
+            let world = document.getElementById('world');
+            if(world) {
+                world.style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
+                document.getElementById('player').style.left = pX + 'px';
+                document.getElementById('player').style.top = pY + 'px';
+            }
+            requestAnimationFrame(loop);
+        }
+
+        setup();
+    </script>
+</body>
+</html>
