@@ -126,4 +126,98 @@
             document.getElementById('chat-area').classList.remove('hidden');
             document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
             dados.forEach(b => {
-                const o = document.createElement('div'); const x=(b.id%60)*4
+                const o = document.createElement('div'); const x=(b.id%60)*40, y=Math.floor(b.id/60)*40;
+                o.className = 'obj ' + b.cl; o.style.left = x+'px'; o.style.top = y+'px';
+                document.getElementById('objs').appendChild(o);
+                if(b.cl==='spawn') { pX=x; pY=y; }
+            });
+            db.ref(`online/${id}`).on('value', s => {
+                document.querySelectorAll('.ghost').forEach(g => g.remove());
+                const pls = s.val();
+                for(let p in pls) if(p !== nick && Date.now() - pls[p].t < 3000){
+                    const g = document.createElement('div'); g.className='ghost';
+                    g.style.left = pls[p].x+'px'; g.style.top = pls[p].y+'px';
+                    document.getElementById('world').appendChild(g);
+                }
+            });
+            loop();
+        }
+
+        // LÓGICA DE COLISÃO REFORÇADA
+        function checkCollision(nx, ny) {
+            let collision = { hit: false, type: null, bx: 0, by: 0 };
+            for (let b of curMapData) {
+                const bx = (b.id % 60) * 40;
+                const by = Math.floor(b.id / 60) * 40;
+                // Personagem tem 30x30, Bloco 40x40
+                if (nx < bx + 40 && nx + 30 > bx && ny < by + 40 && ny + 30 > by) {
+                    if (['block', 'ice', 'spring'].includes(b.cl)) {
+                        return { hit: true, type: b.cl, bx, by };
+                    }
+                    if (b.cl === 'lava') play(curMapData, currentMapId);
+                    if (b.cl === 'flag') { game = false; db.ref('ranking/' + nick + '/moedas').transaction(c => (c || 0) + 150); menu(); }
+                }
+            }
+            return collision;
+        }
+
+        function loop() {
+            if(!game) return;
+            vY += 0.8;
+            let friction = 0.8;
+            
+            // Check ice friction
+            const ground = checkCollision(pX, pY + 2);
+            if(ground.type === 'ice') friction = 0.98;
+
+            if(keys['KeyA'] || keys['ArrowLeft']) vX = friction > 0.9 ? vX-0.2 : -6; 
+            else if(keys['KeyD'] || keys['ArrowRight']) vX = friction > 0.9 ? vX+0.2 : 6; 
+            else vX *= friction;
+
+            // X Movement
+            let nextX = pX + vX;
+            let colX = checkCollision(nextX, pY);
+            if(colX.hit) {
+                if(vX > 0) pX = colX.bx - 30;
+                else if(vX < 0) pX = colX.bx + 40;
+                vX = 0;
+            } else { pX = nextX; }
+
+            // Y Movement
+            let nextY = pY + vY;
+            let colY = checkCollision(pX, nextY);
+            if(colY.hit) {
+                if(vY > 0) {
+                    pY = colY.by - 30;
+                    vY = colY.type === 'spring' ? -25 : 0;
+                } else if(vY < 0) {
+                    pY = colY.by + 40;
+                    vY = 0;
+                }
+            } else { pY = nextY; }
+
+            if((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && checkCollision(pX, pY + 2).hit) vY = -15;
+            if(pY > 1200) play(curMapData, currentMapId);
+
+            db.ref(`online/${currentMapId}/${nick}`).set({ x: pX, y: pY, t: Date.now() });
+            document.getElementById('world').style.transform = `translate(${window.innerWidth/2-pX}px, ${window.innerHeight/2-pY}px)`;
+            document.getElementById('player').style.left = pX+'px'; document.getElementById('player').style.top = pY+'px';
+            loopId = requestAnimationFrame(loop);
+        }
+
+        function login() {
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2 style="color:var(--cyan)">BOLACHA MAKER</h2><input type="text" id="nick-in" placeholder="Nick" style="padding:12px; width:80%; margin-bottom:10px;"><button class="btn" onclick="setNick()">LOGAR</button></div>`;
+        }
+        function setNick() { const v = document.getElementById('nick-in').value.trim(); if(v){ nick=v; localStorage.setItem('maker_nick', v); init(); } }
+        function abrirLoja() {
+            const it = [{id:'lava',n:'LAVA',p:500,c:'var(--red)'},{id:'ice',n:'GELO',p:800,c:'#a0e9ff'},{id:'spring',n:'MOLA',p:1200,c:'#50ff50'}];
+            let h = `<h2>LOJA</h2>`;
+            it.forEach(i => { const tem=inv[i.id]; h += `<button class="btn" style="background:${tem?'#333':i.c}" onclick="${tem?'':`comprar('${i.id}',${i.p})`}">${i.n} ${tem?'(OK)':'$'+i.p}</button>`; });
+            h += `<button class="btn" onclick="menu()">VOLTAR</button>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card">${h}</div>`;
+        }
+        function comprar(id,p) { if(moedas>=p){ db.ref('ranking/'+nick).update({moedas:moedas-p, [`inv/${id}`]:true}); } }
+        init();
+    </script>
+</body>
+</html>
