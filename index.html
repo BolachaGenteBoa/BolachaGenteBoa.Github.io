@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER V44 - FULL</title>
+    <title>BOLACHA MAKER V46 - COMPLETO</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -15,53 +15,46 @@
         .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 450px; text-align: center; }
         .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         
+        /* MINIATURAS */
+        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .map-card { background: #000; border: 2px solid var(--purple); border-radius: 10px; cursor: pointer; overflow: hidden; height: 120px; position: relative; }
+        .map-prev { transform: scale(0.15); transform-origin: top left; width: 600%; height: 600%; position: absolute; pointer-events: none; }
+        .map-info { position: absolute; bottom: 0; width: 100%; background: var(--purple); font-size: 11px; padding: 4px; font-weight: bold; z-index: 10; }
+
         /* EDITOR */
-        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(20, 40px); background: #111; border: 1px solid #333; cursor: crosshair; }
-        .cell { width: 40px; height: 40px; border: 0.1px solid rgba(255,255,255,0.05); box-sizing: border-box; }
-        #palette { position: fixed; right: 20px; top: 70px; display: flex; flex-direction: column; gap: 5px; background: #000; padding: 10px; border-radius: 10px; border: 1px solid var(--cyan); }
+        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); background: #111; }
+        .cell { width: 40px; height: 40px; border: 0.1px solid rgba(255,255,255,0.05); }
+        #palette { position: fixed; right: 20px; top: 70px; display: flex; flex-direction: column; gap: 5px; background: #000; padding: 10px; border-radius: 10px; border: 1px solid var(--cyan); z-index: 10000; }
         .p-item { width: 40px; height: 40px; border: 2px solid transparent; cursor: pointer; }
         .p-item.active { border-color: #fff; }
 
         /* JOGO */
-        #game-view { width: 100vw; height: calc(100vh - 50px); position: relative; overflow: hidden; background: #000; }
+        #game-view { width: 100vw; height: calc(100vh - 50px); position: relative; overflow: hidden; }
         #world { position: absolute; transform-origin: 0 0; }
-        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 5px; z-index: 100; }
+        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 5px; z-index: 100; box-shadow: 0 0 10px var(--cyan); }
+        .ghost { position: absolute; width: 30px; height: 30px; background: rgba(0,242,255,0.2); border: 1px solid #fff; border-radius: 5px; z-index: 90; }
         .obj { position: absolute; width: 40px; height: 40px; }
-        .block { background: #555; } .lava { background: var(--red); box-shadow: 0 0 10px var(--red); } .ice { background: #a0e9ff; } .spring { background: #50ff50; } .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
-        .spawn { border: 2px dashed var(--cyan); }
-
-        /* RANKING */
-        #rank-box { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; margin-bottom: 15px; text-align: left; }
-        .rank-line { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #222; }
-
-        /* CHAT */
+        .block { background: #555; } .lava { background: var(--red); } .ice { background: #a0e9ff; } .spring { background: #50ff50; } .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+        
         #chat-area { position: fixed; bottom: 20px; left: 10px; width: 220px; height: 150px; background: rgba(0,0,0,0.8); border: 1px solid var(--purple); border-radius: 10px; display: flex; flex-direction: column; z-index: 9000; }
         #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 11px; }
         #chat-in { background: #000; border: none; color: #fff; padding: 8px; border-top: 1px solid var(--purple); outline: none; }
+        #rank-box { background: rgba(0,0,0,0.5); padding: 8px; border-radius: 10px; margin-bottom: 10px; text-align: left; font-size: 12px; }
     </style>
 </head>
 <body>
     <div id="header" class="hidden">
-        <div id="d-nick">...</div>
+        <div id="d-nick"></div>
         <div style="color:var(--yellow)">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="abrirAdm()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">ADM</button>
     </div>
-
     <div id="main-content"></div>
-
-    <div id="chat-area" class="hidden">
-        <div id="chat-msgs"></div>
-        <input type="text" id="chat-in" placeholder="Diga algo...">
-    </div>
+    <div id="chat-area" class="hidden"><div id="chat-msgs"></div><input type="text" id="chat-in" placeholder="Chat..."></div>
 
     <script>
         const cfg = { apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o", authDomain: "bolachamakergame.firebaseapp.com", databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com", projectId: "bolachamakergame", appId: "1:207720367456:web:1a58957162be2b080f4a05" };
         firebase.initializeApp(cfg);
         const db = firebase.database();
-        
-        let nick = localStorage.getItem('maker_nick'), moedas = 0, inv = {};
-        let game = false, loopId = null, curMap = [], pX=0, pY=0, vX=0, vY=0, keys = {};
-        let brush = 'block';
+        let nick = localStorage.getItem('maker_nick'), moedas = 0, game = false, loopId = null, curMap = [], mapId = "", pX=0, pY=0, vX=0, vY=0, keys = {}, brush='block', inv={};
 
         function init() {
             if(!nick) return login();
@@ -71,95 +64,74 @@
                 moedas = d.moedas; inv = d.inv || {};
                 document.getElementById('coins').innerText = Math.floor(moedas);
                 document.getElementById('d-nick').innerText = nick;
-                if(nick.toLowerCase()==='bolacha') document.getElementById('adm-btn').classList.remove('hidden');
                 if(!game) menu();
             });
             window.onkeydown = e => keys[e.code] = true;
             window.onkeyup = e => keys[e.code] = false;
+            document.getElementById('chat-in').onkeydown = e => { if(e.key==='Enter' && e.target.value.trim()){ db.ref('chat').push({u:nick, m:e.target.value}); e.target.value=""; } };
         }
 
         function menu() {
-            cancelAnimationFrame(loopId);
-            game = false; document.getElementById('chat-area').classList.add('hidden');
+            cancelAnimationFrame(loopId); game = false;
+            document.getElementById('chat-area').classList.add('hidden');
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
                     <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
-                    <div id="rank-box">Carregando TOP 5...</div>
+                    <div id="rank-box">Carregando TOP...</div>
                     <button class="btn" style="background:var(--cyan)" onclick="galeria()">JOGAR</button>
-                    <button class="btn" style="background:var(--purple); color:#fff" onclick="editor()">CRIAR FASE</button>
+                    <button class="btn" style="background:var(--purple); color:#fff" onclick="editor()">CRIAR</button>
                     <button class="btn" style="background:var(--yellow); color:#000" onclick="loja()">LOJA</button>
                 </div>`;
             db.ref('ranking').orderByChild('moedas').limitToLast(5).once('value', s => {
-                let h = "<b>🏆 RANKING MOEDAS</b><br>";
+                let h = "<b>🏆 RANKING</b><br>";
                 let p = []; s.forEach(u => p.push({n:u.key, m:u.val().moedas}));
-                p.reverse().forEach((u,i) => h += `<div class="rank-line"><span>${i+1}.${u.n}</span><span>$${Math.floor(u.m)}</span></div>`);
+                p.reverse().forEach((u,i) => h += `<div style="display:flex;justify-content:space-between"><span>${i+1}.${u.n}</span><span>$${Math.floor(u.m)}</span></div>`);
                 document.getElementById('rank-box').innerHTML = h;
             });
         }
 
-        function editor() {
-            let h = `<div style="overflow:auto; width:100%; height:100%; background:#050510;">
-                <div id="palette">
-                    <div class="p-item block active" onclick="setB('block',this)"></div>
-                    <div class="p-item lava" onclick="setB('lava',this)"></div>
-                    <div class="p-item ice" onclick="setB('ice',this)"></div>
-                    <div class="p-item spring" onclick="setB('spring',this)"></div>
-                    <div class="p-item spawn" onclick="setB('spawn',this)"></div>
-                    <div class="p-item flag" onclick="setB('flag',this)"></div>
-                    <button onclick="salvarMapa()" style="margin-top:10px;">SALVAR</button>
-                    <button onclick="menu()">SAIR</button>
-                </div>
-                <div id="editor-grid"></div>
-            </div>`;
-            document.getElementById('main-content').innerHTML = h;
-            const grid = document.getElementById('editor-grid');
-            for(let i=0; i<1200; i++) {
-                const c = document.createElement('div');
-                c.className = 'cell';
-                c.onclick = () => { c.className = 'cell '+brush; c.dataset.type = brush; };
-                grid.appendChild(c);
-            }
-        }
-
-        function setB(t, el) { brush=t; document.querySelectorAll('.p-item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); }
-
-        function salvarMapa() {
-            const dados = [];
-            document.querySelectorAll('.cell').forEach((c, i) => {
-                if(c.dataset.type) dados.push({id: i, cl: c.dataset.type});
-            });
-            if(dados.length > 0) {
-                db.ref('mapas').push({autor: nick, dados: dados});
-                alert("Mapa Enviado!");
-                menu();
-            }
-        }
-
         function galeria() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card" style="max-width:500px"><h2>GALERIA</h2><div id="m-grid" class="map-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div><button class="btn" onclick="menu()">VOLTAR</button></div>`;
-            db.ref('mapas').limitToLast(10).once('value', s => {
+            document.getElementById('main-content').innerHTML = `<div class="menu-card" style="max-width:500px"><h2>GALERIA</h2><div id="m-grid" class="map-grid"></div><button class="btn" onclick="menu()">VOLTAR</button></div>`;
+            db.ref('mapas').once('value', s => {
                 s.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'btn'; div.style.background = '#222';
-                    div.innerHTML = m.val().autor;
-                    div.onclick = () => play(m.val().dados);
-                    document.getElementById('m-grid').appendChild(div);
+                    const d = m.val();
+                    const card = document.createElement('div'); card.className = 'map-card';
+                    card.innerHTML = `<div class="map-prev" id="prev-${m.key}"></div><div class="map-info">${d.autor}</div>`;
+                    card.onclick = () => play(d.dados, m.key);
+                    document.getElementById('m-grid').appendChild(card);
+                    const pCont = document.getElementById(`prev-${m.key}`);
+                    d.dados.slice(0,60).forEach(b => {
+                        const o = document.createElement('div'); o.className = 'obj ' + b.cl;
+                        o.style.left = (b.id%60)*40+'px'; o.style.top = Math.floor(b.id/60)*40+'px';
+                        pCont.appendChild(o);
+                    });
                 });
             });
         }
 
-        function play(d) {
-            cancelAnimationFrame(loopId);
-            game = true; curMap = d; vX=0; vY=0;
+        function play(d, id) {
+            cancelAnimationFrame(loopId); game = true; curMap = d; mapId = id; vX=0; vY=0;
             document.getElementById('chat-area').classList.remove('hidden');
             document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
+            db.ref('chat').off();
+            db.ref('chat').limitToLast(10).on('child_added', s => {
+                document.getElementById('chat-msgs').innerHTML += `<div><b>${s.val().u}:</b> ${s.val().m}</div>`;
+                document.getElementById('chat-msgs').scrollTop = 999;
+            });
             d.forEach(b => {
-                const o = document.createElement('div');
-                const x = (b.id % 60) * 40, y = Math.floor(b.id / 60) * 40;
-                o.className = 'obj ' + b.cl;
-                o.style.left = x + 'px'; o.style.top = y + 'px';
+                const o = document.createElement('div'); const x=(b.id%60)*40, y=Math.floor(b.id/60)*40;
+                o.className = 'obj ' + b.cl; o.style.left = x+'px'; o.style.top = y+'px';
                 document.getElementById('objs').appendChild(o);
-                if(b.cl === 'spawn') { pX = x; pY = y; }
+                if(b.cl==='spawn') { pX=x; pY=y; }
+            });
+            db.ref(`online/${mapId}`).on('value', s => {
+                document.querySelectorAll('.ghost').forEach(g=>g.remove());
+                const pls = s.val();
+                for(let k in pls) if(k!==nick && Date.now()-pls[k].t < 3000){
+                    const g = document.createElement('div'); g.className='ghost';
+                    g.style.left=pls[k].x+'px'; g.style.top=pls[k].y+'px';
+                    document.getElementById('world').appendChild(g);
+                }
             });
             loop();
         }
@@ -167,42 +139,63 @@
         function loop() {
             if(!game) return;
             vY += 0.8;
-            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6;
-            else if(keys['KeyD'] || keys['ArrowRight']) vX = 6;
-            else vX *= 0.8;
-            
-            pX += vX; col(true);
-            pY += vY; col(false);
-
-            if((keys['Space'] || keys['ArrowUp']) && vY === 0) vY = -14;
-
-            const w = document.getElementById('world');
-            w.style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
-            const p = document.getElementById('player');
-            p.style.left = pX + 'px'; p.style.top = pY + 'px';
-            
+            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6; else if(keys['KeyD'] || keys['ArrowRight']) vX = 6; else vX *= 0.8;
+            pX += vX; col(true); pY += vY; col(false);
+            if((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && vY === 0) vY = -14;
+            if(pY > 1000) play(curMap, mapId); 
+            db.ref(`online/${mapId}/${nick}`).set({x:pX, y:pY, t:Date.now()});
+            document.getElementById('world').style.transform = `translate(${window.innerWidth/2-pX}px, ${window.innerHeight/2-pY}px)`;
+            document.getElementById('player').style.left = pX+'px'; document.getElementById('player').style.top = pY+'px';
             loopId = requestAnimationFrame(loop);
         }
 
         function col(isX) {
             curMap.forEach(b => {
-                const bx = (b.id % 60) * 40, by = Math.floor(b.id / 60) * 40;
-                if(pX < bx + 40 && pX + 30 > bx && pY < by + 40 && pY + 30 > by) {
-                    if(b.cl === 'block' || b.cl === 'ice' || b.cl === 'spring') {
-                        if(isX) { pX -= vX; vX = 0; }
-                        else { 
-                            if(vY > 0) { pY = by - 30; vY = b.cl === 'spring' ? -20 : 0; }
-                            else { pY = by + 40; vY = 0; }
-                        }
+                const bx=(b.id%60)*40, by=Math.floor(b.id/60)*40;
+                if(pX<bx+40 && pX+30>bx && pY<by+40 && pY+30>by) {
+                    if(b.cl==='block'||b.cl==='ice'||b.cl==='spring'){
+                        if(isX){ pX-=vX; vX=0; } else { if(vY>0){ pY=by-30; vY=b.cl==='spring'?-20:0; } else { pY=by+40; vY=0; } }
                     }
-                    if(b.cl === 'lava') play(curMap);
-                    if(b.cl === 'flag') { game = false; db.ref('ranking/'+nick+'/moedas').transaction(c => (c||0)+100); menu(); }
+                    if(b.cl==='lava') play(curMap, mapId);
+                    if(b.cl==='flag'){ game=false; db.ref('ranking/'+nick+'/moedas').transaction(c=>(c||0)+100); menu(); }
                 }
             });
         }
 
+        function editor() {
+            document.getElementById('main-content').innerHTML = `
+                <div style="overflow:auto; width:100%; height:100%;"><div id="palette">
+                    <div class="p-item block active" onclick="brush='block';document.querySelectorAll('.p-item').forEach(i=>i.classList.remove('active'));this.classList.add('active')"></div>
+                    <div class="p-item lava" onclick="brush='lava';document.querySelectorAll('.p-item').forEach(i=>i.classList.remove('active'));this.classList.add('active')"></div>
+                    <div class="p-item flag" onclick="brush='flag';document.querySelectorAll('.p-item').forEach(i=>i.classList.remove('active'));this.classList.add('active')"></div>
+                    <div class="p-item spawn" onclick="brush='spawn';document.querySelectorAll('.p-item').forEach(i=>i.classList.remove('active'));this.classList.add('active')"></div>
+                    <button onclick="salvar()">SALVAR</button><button onclick="menu()">SAIR</button>
+                </div><div id="editor-grid"></div></div>`;
+            const g = document.getElementById('editor-grid');
+            for(let i=0; i<1200; i++){
+                const c = document.createElement('div'); c.className='cell';
+                c.onclick = () => { c.className='cell '+brush; c.dataset.t=brush; };
+                g.appendChild(c);
+            }
+        }
+
+        function salvar() {
+            const d = []; document.querySelectorAll('.cell').forEach((c,i)=>{ if(c.dataset.t) d.push({id:i, cl:c.dataset.t}); });
+            if(d.length>0){ db.ref('mapas').push({autor:nick, dados:d}); menu(); }
+        }
+
+        function loja() {
+            const items = [{id:'lava',n:'Lava',p:500},{id:'ice',n:'Gelo',p:800}];
+            let h = `<h2>LOJA</h2>`;
+            items.forEach(i => h += `<button class="btn" style="background:var(--purple)" onclick="buy('${i.id}',${i.p})">${i.n} - $${i.p}</button>`);
+            h += `<button class="btn" onclick="menu()">VOLTAR</button>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card">${h}</div>`;
+        }
+        
+        function buy(id,p) { if(moedas>=p) db.ref('ranking/'+nick).update({moedas:moedas-p, [`inv/${id}`]:true}); }
+
         function login() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>ENTRAR</h2><input type="text" id="n-in" placeholder="Nick" style="padding:10px;width:80%"><button class="btn" onclick="let v=document.getElementById('n-in').value; if(v){nick=v;localStorage.setItem('maker_nick',v);init();}">LOGAR</button></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NICK</h2><input id="ni" style="padding:10px"><button class="btn" onclick="nick=document.getElementById('ni').value;localStorage.setItem('maker_nick',nick);init()">ENTRAR</button></div>`;
         }
 
         init();
