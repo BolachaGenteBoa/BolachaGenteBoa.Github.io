@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V24 PHYSICS FIX</title>
+    <title>BOLACHA MAKER - V25 ADMIN RESTORED</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -16,8 +16,8 @@
         .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
-        
-        /* RANKING */
+        .btn-red { background: var(--red); color: #fff; }
+
         #rank-box { background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin: 10px 0; max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; }
         .rank-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #222; }
 
@@ -43,20 +43,37 @@
 
         /* TELA DE MORTE */
         #death-screen { position: fixed; inset: 0; background: rgba(255,0,0,0.3); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+
+        /* PAINEL ADM */
+        #adm-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
+        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:10px;">ADM</button>
     </div>
+
     <div id="main-content"></div>
 
     <div id="death-screen" class="hidden">
         <div class="menu-card" style="border-color: red;">
-            <h1 style="color:red">VOCÊ MORREU!</h1>
+            <h1 style="color:red">MORREU!</h1>
             <button class="btn btn-cyan" onclick="reiniciarFase()">REENTRAR</button>
             <button class="btn btn-purple" onclick="telaMenu()">MENU</button>
+        </div>
+    </div>
+
+    <div id="adm-panel" class="hidden">
+        <div class="menu-card" style="border-color: var(--red);">
+            <h2 style="color:var(--red); margin:0;">GERENCIAMENTO ADM</h2>
+            <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
+            <input type="text" id="target-n" placeholder="Nick do Jogador" style="width:90%; padding:10px; margin:5px; background:#000; color:#fff; border:1px solid #555;">
+            <input type="number" id="target-v" placeholder="Valor de Moedas" style="width:90%; padding:10px; margin:5px; background:#000; color:#fff; border:1px solid #555;">
+            <button class="btn btn-cyan" onclick="admAddMoedas()">DAR MOEDAS</button>
+            <button class="btn btn-red" onclick="admBanir()">BANIR USUÁRIO</button>
+            <button class="btn" onclick="document.getElementById('adm-panel').classList.add('hidden')">FECHAR</button>
         </div>
     </div>
 
@@ -75,12 +92,15 @@
         localStorage.setItem('maker_nick', nick);
         
         let moedas = 0, inventario = { block: true, spawn: true, flag: true }, gameActive = false, keys = {};
-        let pX=0, pY=0, vX=0, vY=0, noChao=false, noGelo=false, noSand=false, blocosAtuais=[];
+        let pX=0, pY=0, vX=0, vY=0, noChao=false, noGelo=false, blocosAtuais=[];
         const custos = { 'block':4, 'lava':10, 'ice':20, 'sand':20, 'spring':30, 'ghost':30, 'spawn':0, 'flag':0, 'erase':0 };
 
         window.onkeydown=(e)=>keys[e.code]=true; window.onkeyup=(e)=>keys[e.code]=false;
 
         function setup() {
+            // Checar Ban
+            db.ref('bans/' + nick).on('value', s => { if(s.val()) document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20%'>VOCÊ ESTÁ BANIDO.</h1>"; });
+
             db.ref('ranking/' + nick).on('value', s => {
                 let d = s.val() || { moedas: 500 };
                 moedas = isFinite(d.moedas) ? d.moedas : 500;
@@ -88,7 +108,15 @@
                 inventario.block = true; inventario.spawn = true; inventario.flag = true;
                 document.getElementById('coins').innerText = Math.floor(moedas);
             });
-            document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
+
+            // MOSTRAR BOTÃO ADM
+            if(nick.toLowerCase() === 'bolacha') {
+                document.getElementById('adm-btn').classList.remove('hidden');
+                document.getElementById('display-nick').innerHTML = `<b style="color:var(--red)">[ADM] ${nick}</b>`;
+            } else {
+                document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
+            }
+
             telaMenu();
         }
 
@@ -104,7 +132,6 @@
                     <button class="btn" style="background:var(--yellow); color:black" onclick="telaLoja()">🛒 LOJA</button>
                 </div>
             `;
-            // Atualiza Ranking
             db.ref('ranking').orderByChild('moedas').limitToLast(5).once('value', s => {
                 let h = "<b>🏆 TOP PLAYERS</b><br>";
                 let list = [];
@@ -134,9 +161,9 @@
             document.getElementById('main-content').innerHTML = `
                 <div id="editor-wrapper">
                     <div id="editor-sidebar">
-                        <div class="tool-btn active" id="btn-block" onclick="setT('block')">BLOCO ($4)</div>
-                        <div class="tool-btn" id="btn-spawn" onclick="setT('spawn')">SPAWN ($0)</div>
-                        <div class="tool-btn" id="btn-flag" onclick="setT('flag')">FINAL ($0)</div>
+                        <div class="tool-btn active" id="btn-block" onclick="setT('block')">BLOCO</div>
+                        <div class="tool-btn" id="btn-spawn" onclick="setT('spawn')">SPAWN</div>
+                        <div class="tool-btn" id="btn-flag" onclick="setT('flag')">FINAL</div>
                         ${inventario.lava ? '<div class="tool-btn" id="btn-lava" onclick="setT(\'lava\')">LAVA</div>' : ''}
                         ${inventario.ice ? '<div class="tool-btn" id="btn-ice" onclick="setT(\'ice\')">GELO</div>' : ''}
                         ${inventario.spring ? '<div class="tool-btn" id="btn-spring" onclick="setT(\'spring\')">MOLA</div>' : ''}
@@ -168,7 +195,7 @@
         function salvar() {
             let d = []; document.querySelectorAll('.cell').forEach((c,i)=>{ if(c.classList.length>1) d.push({id:i, cl:c.className}); });
             if(!d.some(x=>x.cl.includes('spawn'))) return alert("Falta o SPAWN!");
-            db.ref('mapas').push({autor:nick, dados:d}); alert("Publicado!"); telaMenu();
+            db.ref('mapas').push({autor:nick, dados:d}); alert("Mapa Publicado!"); telaMenu();
         }
 
         function telaGaleria() {
@@ -199,18 +226,11 @@
 
         function loop() {
             if(!gameActive) return;
-            let acc=noGelo?0.3:1.2, fric=noGelo?0.99:0.8;
-            if(keys['KeyA']||keys['ArrowLeft']) vX-=acc; else if(keys['KeyD']||keys['ArrowRight']) vX+=acc; else vX*=fric;
-            if((keys['Space']||keys['KeyW'])&&noChao){vY=-13;noChao=false;}
+            let acc=noGelo?0.3:1.2;
+            if(keys['KeyA']||keys['ArrowLeft']) vX-=acc; else if(keys['KeyD']||keys['ArrowRight']) vX+=acc; else vX*=0.8;
             vY+=0.8; 
-
-            // Movimento X com Colisão Lateral
-            pX += vX;
-            checkCol(true);
-            // Movimento Y com Colisão Vertical
-            pY += vY;
-            noChao=false; noGelo=false;
-            checkCol(false);
+            pX += vX; checkCol(true);
+            pY += vY; noChao=false; noGelo=false; checkCol(false);
 
             if(pY>1500) morrer();
             document.getElementById('world').style.transform = `translate(${window.innerWidth/2-pX}px, ${window.innerHeight/2-pY}px)`;
@@ -230,12 +250,21 @@
                         }
                     }
                     if(b.cl.includes('lava')) morrer();
-                    if(b.cl.includes('flag')) { gameActive=false; db.ref('ranking/'+nick+'/moedas').transaction(c=>c+100); alert("VITÓRIA! +$100"); telaMenu(); }
+                    if(b.cl.includes('flag')) { gameActive=false; db.ref('ranking/'+nick+'/moedas').transaction(c=>c+100); alert("VENCEU! +$100"); telaMenu(); }
                 }
             });
         }
 
         function morrer() { gameActive=false; document.getElementById('death-screen').classList.remove('hidden'); }
+
+        // FUNÇÕES ADM
+        function admAddMoedas() {
+            let t=document.getElementById('target-n').value; let v=parseInt(document.getElementById('target-v').value);
+            db.ref('ranking/'+t+'/moedas').transaction(c=>(c||0)+v); alert("Moedas enviadas!");
+        }
+        function admBanir() {
+            let t=document.getElementById('target-n').value; db.ref('bans/'+t).set(true); alert("Usuário Banido!");
+        }
 
         setup();
     </script>
