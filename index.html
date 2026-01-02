@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V16 MECHANICS</title>
+    <title>BOLACHA MAKER - V17 ADM RESTORED</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -16,12 +16,14 @@
         .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
-        
+        .btn-red { background: var(--red); color: #fff; }
+
+        /* EDITOR GRID */
         #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; flex-grow: 1; }
         .cell { width: 40px; height: 40px; border: 1px solid #222; }
         .locked { opacity: 0.2; filter: grayscale(1); }
 
-        /* ESTILOS DOS BLOCOS */
+        /* BLOCOS */
         #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 6px; z-index: 99; }
         .obj { position: absolute; width: 40px; height: 40px; }
         .block { background: #444; border: 2px solid #555; }
@@ -32,6 +34,9 @@
         .ghost { background: #444; opacity: 0.4; border: 1px dashed #fff; }
         .spawn { border: 2px dashed var(--cyan); background: rgba(0, 242, 255, 0.1); }
         .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+        /* INPUTS ADM */
+        .adm-input { width: 80%; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid var(--cyan); background: #000; color: #fff; }
     </style>
 </head>
 <body>
@@ -39,12 +44,26 @@
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
+        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">ADM PANEL</button>
     </div>
 
     <div id="main-content"></div>
 
+    <div id="adm-panel" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; display:flex; align-items:center; justify-content:center;">
+        <div class="menu-card" style="border-color: var(--red);">
+            <h2 style="color:var(--red); margin:0;">COMANDOS SUPREMOS</h2>
+            <hr border="1" color="#333" style="margin: 15px 0;">
+            <input type="text" id="target-n" class="adm-input" placeholder="Nick do Jogador">
+            <input type="number" id="target-v" class="adm-input" placeholder="Quantidade/Valor">
+            
+            <button class="btn btn-cyan" onclick="admAddMoedas()">ADICIONAR MOEDAS</button>
+            <button class="btn btn-red" onclick="admBanir()">BANIR JOGADOR</button>
+            
+            <button class="btn" style="background:#fff; color:#000;" onclick="document.getElementById('adm-panel').classList.add('hidden')">FECHAR PAINEL</button>
+        </div>
+    </div>
+
     <script>
-        // Configuração do Firebase mantida
         const firebaseConfig = {
             apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o",
             authDomain: "bolachamakergame.firebaseapp.com",
@@ -56,7 +75,7 @@
         const db = firebase.database();
 
         let nick = localStorage.getItem('maker_nick') || prompt("Seu Nick:");
-        if(!nick) nick = "Ninja" + Math.floor(Math.random()*99);
+        if(!nick) nick = "Player" + Math.floor(Math.random()*99);
         localStorage.setItem('maker_nick', nick);
 
         let moedas = 0;
@@ -69,20 +88,48 @@
         window.onkeyup=(e)=>keys[e.code]=false;
 
         function setup() {
+            // Monitor de Ban
+            db.ref('bans/' + nick).on('value', s => { if(s.val()) document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:100px;'>VOCÊ FOI BANIDO!</h1>"; });
+
             db.ref('ranking/' + nick).on('value', s => {
                 if(!s.exists()) {
                     db.ref('ranking/' + nick).set({ moedas: 500, inventario: { block: true, spawn: true, flag: true } });
                 } else {
                     let d = s.val();
-                    moedas = d.moedas || 0;
+                    moedas = isFinite(d.moedas) ? d.moedas : 500;
                     inventario = d.inventario || { block: true, spawn: true, flag: true };
                     document.getElementById('coins').innerText = Math.floor(moedas);
                 }
             });
-            document.getElementById('display-nick').innerText = nick;
+
+            // Ativa botão de ADM se for o Bolacha
+            if(nick.toLowerCase() === 'bolacha') {
+                document.getElementById('adm-btn').classList.remove('hidden');
+                document.getElementById('display-nick').innerHTML = `<b>${nick}</b> <span style="color:var(--yellow)">[DONO]</span>`;
+            } else {
+                document.getElementById('display-nick').innerText = nick;
+            }
+
             telaMenu();
         }
 
+        // FUNÇÕES ADM
+        function admAddMoedas() {
+            let t = document.getElementById('target-n').value;
+            let v = parseInt(document.getElementById('target-v').value);
+            if(!t || isNaN(v)) return alert("Preencha os campos!");
+            db.ref('ranking/' + t + '/moedas').transaction(c => (c || 0) + v);
+            alert("Moedas enviadas para " + t);
+        }
+
+        function admBanir() {
+            let t = document.getElementById('target-n').value;
+            if(!t) return alert("Nick do alvo?");
+            db.ref('bans/' + t).set(true);
+            alert("Jogador " + t + " foi banido!");
+        }
+
+        // MENUS E LOJA
         function telaMenu() {
             gameActive = false;
             document.getElementById('main-content').innerHTML = `
@@ -103,11 +150,11 @@
                 {id: 'sand', n: 'Areia Movediça', p: 600},
                 {id: 'ghost', n: 'Bloco Fantasma', p: 1000}
             ];
-            let html = `<h2>LOJA</h2><div style="max-height:300px; overflow-y:auto;">`;
+            let html = `<h2>LOJA</h2><div style="max-height:280px; overflow-y:auto;">`;
             itens.forEach(i => {
                 let jaTem = inventario[i.id];
                 html += `<button class="btn" style="background:${jaTem?'#333':'var(--purple)'}" onclick="${jaTem?'':'comprarItem(\''+i.id+'\','+i.p+')'}">
-                    ${i.n} ${jaTem ? '(OK)' : '(💰'+i.p+')'}
+                    ${i.n} ${jaTem ? '(COMPRADO)' : '(💰'+i.p+')'}
                 </button>`;
             });
             html += `</div><button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
@@ -118,50 +165,44 @@
             if(moedas >= preco) {
                 db.ref('ranking/' + nick + '/moedas').transaction(c => c - preco);
                 db.ref('ranking/' + nick + '/inventario/' + id).set(true);
-                alert("Liberado!"); telaLoja();
-            } else alert("Sem moedas!");
+                alert("Bloco desbloqueado!"); telaLoja();
+            } else alert("Moedas insuficientes!");
         }
 
+        // EDITOR E GAMEPLAY MANTIDOS (Molas, Gelo, Areia e Fantasma)
         let tool = 'block';
+        function setTool(t) { if(inventario[t]) tool = t; else alert("Compre na loja!"); }
+        
         function telaEditor() {
             document.getElementById('main-content').innerHTML = `
                 <div id="editor-grid"></div>
-                <div style="height:85px; background:#0a0a20; display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; padding:5px; width:100%;">
-                    <button onclick="setTool('block')" class="block" style="height:30px"></button>
-                    <button onclick="setTool('spawn')" class="spawn" style="height:30px"></button>
-                    <button onclick="setTool('flag')" class="flag" style="height:30px"></button>
-                    <button onclick="setTool('lava')" class="lava ${inventario.lava?'':'locked'}" style="height:30px"></button>
-                    <button onclick="setTool('ice')" class="ice ${inventario.ice?'':'locked'}" style="height:30px"></button>
-                    <button onclick="setTool('spring')" class="spring ${inventario.spring?'':'locked'}" style="height:30px"></button>
-                    <button onclick="setTool('sand')" class="sand ${inventario.sand?'':'locked'}" style="height:30px"></button>
-                    <button onclick="setTool('ghost')" class="ghost ${inventario.ghost?'':'locked'}" style="height:30px"></button>
-                    <button onclick="tool='erase'" style="background:red; color:white;">APAGAR</button>
-                    <button class="btn-cyan" onclick="salvar()">SALVAR</button>
-                    <button class="btn-purple" onclick="telaMenu()">SAIR</button>
+                <div style="height:90px; background:#0a0a20; display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; padding:5px; width:100%;">
+                    <button onclick="setTool('block')" class="block"></button>
+                    <button onclick="setTool('spawn')" class="spawn"></button>
+                    <button onclick="setTool('flag')" class="flag"></button>
+                    <button onclick="setTool('lava')" class="lava ${inventario.lava?'':'locked'}"></button>
+                    <button onclick="setTool('ice')" class="ice ${inventario.ice?'':'locked'}"></button>
+                    <button onclick="setTool('spring')" class="spring ${inventario.spring?'':'locked'}"></button>
+                    <button onclick="setTool('sand')" class="sand ${inventario.sand?'':'locked'}"></button>
+                    <button onclick="setTool('ghost')" class="ghost ${inventario.ghost?'':'locked'}"></button>
+                    <button onclick="tool='erase'" style="background:red; color:white; font-size:10px;">APAGAR</button>
+                    <button class="btn-cyan" onclick="salvar()" style="font-size:10px;">SALVAR</button>
+                    <button class="btn-purple" onclick="telaMenu()" style="font-size:10px;">SAIR</button>
                 </div>
             `;
             const g = document.getElementById('editor-grid');
             for(let i=0; i<1800; i++) {
                 const c = document.createElement('div'); c.className = 'cell';
-                c.onmousedown=(e)=>{ if(e.buttons===1) aplicarTool(c); };
-                c.onmouseenter=(e)=>{ if(e.buttons===1) aplicarTool(c); };
+                c.onmousedown=(e)=>{ if(e.buttons===1) c.className = 'cell ' + (tool==='erase'?'':tool); };
+                c.onmouseenter=(e)=>{ if(e.buttons===1) c.className = 'cell ' + (tool==='erase'?'':tool); };
                 g.appendChild(c);
             }
-        }
-
-        function setTool(t) {
-            if(!inventario[t]) return alert("Compre na loja primeiro!");
-            tool = t;
-        }
-
-        function aplicarTool(cell) {
-            cell.className = 'cell ' + (tool === 'erase' ? '' : tool);
         }
 
         function salvar() {
             let d = [];
             document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
-            if(!d.some(x => x.cl.includes('spawn')) || !d.some(x => x.cl.includes('flag'))) return alert("Falta Spawn ou Bandeira!");
+            if(!d.some(x => x.cl.includes('spawn')) || !d.some(x => x.cl.includes('flag'))) return alert("Falta o Spawn ou a Bandeira!");
             db.ref('mapas').push({autor: nick, dados: d});
             alert("Mapa Publicado!"); telaMenu();
         }
@@ -180,72 +221,50 @@
 
         function iniciar(dados) {
             document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
-            blocosAtuais = [];
+            blocosAtuais = dados;
             dados.forEach(d => {
                 let x = (d.id % 60) * 40; let y = Math.floor(d.id / 60) * 40;
                 const o = document.createElement('div'); o.className = 'obj ' + d.cl.replace('cell ', '');
                 o.style.left = x + 'px'; o.style.top = y + 'px';
                 document.getElementById('objs').appendChild(o);
                 if(d.cl.includes('spawn')) { pX = x + 5; pY = y + 5; }
-                if(!d.cl.includes('spawn')) blocosAtuais.push({x, y, type: d.cl});
             });
             vX = 0; vY = 0; gameActive = true; loop();
         }
 
         function loop() {
             if(!gameActive) return;
-            
             let accel = noGelo ? 0.3 : (noSand ? 0.2 : 1.2);
             let friction = noGelo ? 0.98 : (noSand ? 0.6 : 0.8);
-
-            if(keys['KeyA'] || keys['ArrowLeft']) vX -= accel; 
-            else if(keys['KeyD'] || keys['ArrowRight']) vX += accel; 
-            else vX *= friction;
-
+            if(keys['KeyA'] || keys['ArrowLeft']) vX -= accel; else if(keys['KeyD'] || keys['ArrowRight']) vX += accel; else vX *= friction;
             vX = Math.max(-8, Math.min(8, vX));
             if((keys['Space'] || keys['KeyW']) && noChao && !noSand) { vY = -14; noChao = false; }
+            vY += noSand ? 0.2 : 0.8; pX += vX;
             
-            vY += noSand ? 0.2 : 0.8; 
-            pX += vX;
-            
-            // Colisão lateral (Ignora Fantasma e Areia)
-            blocosAtuais.forEach(b => {
-                const isSolid = b.type.includes('block') || b.type.includes('ice') || b.type.includes('spring');
-                if(isSolid && pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
+            blocosAtuais.forEach(d => {
+                let bx = (d.id % 60) * 40; let by = Math.floor(d.id / 60) * 40;
+                if((d.cl.includes('block') || d.cl.includes('ice') || d.cl.includes('spring')) && pX < bx + 35 && pX + 25 > bx && pY < by + 35 && pY + 25 > by) {
                     pX -= vX; vX = 0;
                 }
             });
 
-            pY += vY;
-            noChao = false; noGelo = false; noSand = false;
-
-            blocosAtuais.forEach(b => {
-                if(pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
-                    // Sólidos
-                    if(b.type.includes('block') || b.type.includes('ice') || b.type.includes('spring')) {
-                        if(vY > 0) { 
-                            pY = b.y - 30; 
-                            if(b.type.includes('spring')) { vY = -22; } else { vY = 0; noChao = true; }
-                            if(b.type.includes('ice')) noGelo = true;
-                        }
-                        else if(vY < 0) { pY = b.y + 40; vY = 0; }
+            pY += vY; noChao = false; noGelo = false; noSand = false;
+            blocosAtuais.forEach(d => {
+                let bx = (d.id % 60) * 40; let by = Math.floor(d.id / 60) * 40;
+                if(pX < bx + 35 && pX + 25 > bx && pY < by + 35 && pY + 25 > by) {
+                    if(d.cl.includes('block') || d.cl.includes('ice') || d.cl.includes('spring')) {
+                        if(vY > 0) { pY = by - 30; if(d.cl.includes('spring')) vY = -22; else { vY = 0; noChao = true; } if(d.cl.includes('ice')) noGelo = true; }
+                        else if(vY < 0) { pY = by + 40; vY = 0; }
                     }
-                    // Especiais
-                    if(b.type.includes('sand')) noSand = true;
-                    if(b.type.includes('lava')) { gameActive=false; alert("MORREU!"); telaMenu(); }
-                    if(b.type.includes('flag')) { 
-                        gameActive=false; 
-                        db.ref('ranking/' + nick + '/moedas').transaction(c => (c || 0) + 100);
-                        alert("VITÓRIA! +100 moedas"); telaMenu(); 
-                    }
+                    if(d.cl.includes('sand')) noSand = true;
+                    if(d.cl.includes('lava')) { gameActive=false; alert("MORREU!"); telaMenu(); }
+                    if(d.cl.includes('flag')) { gameActive=false; db.ref('ranking/' + nick + '/moedas').transaction(c => (c || 0) + 100); alert("VITÓRIA!"); telaMenu(); }
                 }
             });
 
             if(pY > 1500) { gameActive=false; alert("LIMBO!"); telaMenu(); }
-            
             document.getElementById('world').style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
-            document.getElementById('player').style.left = pX + 'px';
-            document.getElementById('player').style.top = pY + 'px';
+            document.getElementById('player').style.left = pX + 'px'; document.getElementById('player').style.top = pY + 'px';
             requestAnimationFrame(loop);
         }
 
