@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V13 SHOP</title>
+    <title>BOLACHA MAKER - V14 BUILDER SHOP</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -13,22 +13,23 @@
         #header { background: #0a0a20; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
         #main-content { height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; }
         .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 450px; text-align: center; }
-        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
         .btn-shop { background: var(--yellow); color: #000; }
-        .map-item { display: flex; gap: 5px; margin: 5px 0; }
-        .btn-del { background: var(--red); color: white; border: none; border-radius: 8px; width: 40px; cursor: pointer; }
-        #game-view { width: 100%; height: 100%; background: #000; overflow: hidden; position: relative; }
-        #world { position: absolute; top: 0; left: 0; }
-        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 6px; box-shadow: 0 0 15px var(--cyan); z-index: 99; }
+        
+        /* EDITOR */
+        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; flex-grow: 1; }
+        .cell { width: 40px; height: 40px; border: 1px solid #222; }
+        .locked { opacity: 0.3; filter: grayscale(1); border: 2px solid red !important; }
+        
+        /* OBJETOS */
+        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 6px; z-index: 99; }
         .obj { position: absolute; width: 40px; height: 40px; }
         .block { background: #444; border: 2px solid #555; }
         .lava { background: var(--red); box-shadow: 0 0 10px var(--red); }
         .spawn { border: 2px dashed var(--cyan); background: rgba(0, 242, 255, 0.1); }
         .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
-        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; }
-        .cell { width: 40px; height: 40px; border: 1px solid #222; }
     </style>
 </head>
 <body>
@@ -36,7 +37,7 @@
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:red; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">ADM</button>
+        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:red; color:white; border:none; padding:8px; border-radius:5px;">ADM</button>
     </div>
 
     <div id="main-content"></div>
@@ -47,7 +48,6 @@
             <input type="text" id="target-n" placeholder="Nick" style="width:90%; padding:10px; margin:5px;">
             <input type="number" id="target-v" placeholder="Valor" style="width:90%; padding:10px; margin:5px;">
             <button class="btn btn-cyan" onclick="admAddMoedas()">DAR MOEDAS</button>
-            <button class="btn btn-red" onclick="admBanir()">BANIR</button>
             <button class="btn" onclick="document.getElementById('adm-panel').classList.add('hidden')">SAIR</button>
         </div>
     </div>
@@ -64,12 +64,11 @@
         const db = firebase.database();
 
         let nick = localStorage.getItem('maker_nick') || prompt("Seu Nick:");
-        if(!nick) nick = "Ninja" + Math.floor(Math.random()*999);
+        if(!nick) nick = "Player" + Math.floor(Math.random()*99);
         localStorage.setItem('maker_nick', nick);
 
         let moedas = 0;
-        let mySkin = 'var(--cyan)';
-        let isModerator = false;
+        let inventario = { block: true }; // Bloco normal sempre liberado
         let gameActive = false;
         let keys = {};
         let pX=0, pY=0, vX=0, vY=0, noChao=false, blocosAtuais=[];
@@ -79,19 +78,17 @@
 
         function setup() {
             db.ref('ranking/' + nick).on('value', s => {
-                if(!s.exists()) db.ref('ranking/' + nick).set({ moedas: 500, skin: 'var(--cyan)' });
-                else {
+                if(!s.exists()) {
+                    db.ref('ranking/' + nick).set({ moedas: 500, inventario: { block: true } });
+                } else {
                     let d = s.val();
-                    moedas = isFinite(d.moedas) ? d.moedas : 500;
-                    mySkin = d.skin || 'var(--cyan)';
+                    moedas = d.moedas || 0;
+                    inventario = d.inventario || { block: true };
                     document.getElementById('coins').innerText = Math.floor(moedas);
                 }
             });
-            db.ref('admins/' + nick).on('value', s => {
-                isModerator = (nick.toLowerCase() === 'bolacha' || s.exists());
-                document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
-                if(isModerator) document.getElementById('adm-btn').classList.remove('hidden');
-            });
+            
+            if(nick.toLowerCase() === 'bolacha') document.getElementById('adm-btn').classList.remove('hidden');
             telaMenu();
         }
 
@@ -100,64 +97,97 @@
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
                     <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
-                    <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR</button>
-                    <button class="btn btn-purple" onclick="telaEditor()">EDITOR</button>
-                    <button class="btn btn-shop" onclick="telaLoja()">LOJA DE SKINS</button>
-                    <button class="btn" style="background:#222; color:white;" onclick="telaRanking()">RANKING</button>
+                    <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR NÍVEIS</button>
+                    <button class="btn btn-purple" onclick="telaEditor()">EDITOR DE MAPAS</button>
+                    <button class="btn btn-shop" onclick="telaLoja()">LOJA DE BLOCOS</button>
                 </div>
             `;
         }
 
         function telaLoja() {
-            const skins = [
-                {n: 'Verde Neon', c: '#39ff14', p: 300},
-                {n: 'Rosa Choque', c: '#ff00ff', p: 500},
-                {n: 'Ouro', c: '#ffd700', p: 1000},
-                {n: 'Branco Fantasma', c: '#ffffff', p: 1500},
-                {n: 'Vazio Absolute', c: '#111', p: 2500}
+            const itens = [
+                {id: 'lava', n: 'Bloco de Lava', p: 400},
+                {id: 'flag', n: 'Bandeira Vitória', p: 600},
+                {id: 'spawn', n: 'Ponto de Início', p: 200}
             ];
-            let html = `<h2>LOJA</h2>`;
-            skins.forEach(s => {
-                html += `<button class="btn" style="background:${s.c}; color:${s.c=='#ffffff'?'#000':'#fff'}" onclick="comprarSkin('${s.c}', ${s.p})">${s.n} (💰${s.p})</button>`;
+            let html = `<h2>LOJA DE MATERIAIS</h2>`;
+            itens.forEach(i => {
+                let jaTem = inventario[i.id];
+                html += `<button class="btn" style="background:${jaTem?'#333':'var(--purple)'}" onclick="${jaTem?'':'comprarItem(\''+i.id+'\','+i.p+')'}">
+                    ${i.n} ${jaTem ? '(ADQUIRIDO)' : '(💰'+i.p+')'}
+                </button>`;
             });
-            html += `<button class="btn btn-red" onclick="telaMenu()">VOLTAR</button>`;
+            html += `<button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
             document.getElementById('main-content').innerHTML = `<div class="menu-card">${html}</div>`;
         }
 
-        function comprarSkin(cor, preco) {
+        function comprarItem(id, preco) {
             if(moedas >= preco) {
-                db.ref('ranking/' + nick).update({ moedas: moedas - preco, skin: cor });
-                alert("Skin comprada e aplicada!");
+                db.ref('ranking/' + nick + '/moedas').transaction(c => c - preco);
+                db.ref('ranking/' + nick + '/inventario/' + id).set(true);
+                alert("Bloco liberado para o Editor!");
+                telaLoja();
             } else {
                 alert("Moedas insuficientes!");
             }
         }
 
-        function telaRanking() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>RANKING</h2><div id="rank-list"></div><button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button></div>`;
-            db.ref('ranking').orderByChild('moedas').limitToLast(10).once('value', s => {
-                let items = [];
-                s.forEach(c => { items.push({n: c.key, m: c.val().moedas}); });
-                items.reverse().forEach((u, i) => {
-                    document.getElementById('rank-list').innerHTML += `<p>#${i+1} ${u.n}: 💰${Math.floor(u.m)}</p>`;
-                });
-            });
+        let tool = 'block';
+        function telaEditor() {
+            document.getElementById('main-content').innerHTML = `
+                <div id="editor-grid"></div>
+                <div style="height:80px; background:#0a0a20; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; border-top:2px solid var(--purple);">
+                    <button onclick="setTool('block')" class="block" id="t-block" style="width:35px; height:35px"></button>
+                    <button onclick="setTool('lava')" class="lava ${inventario.lava?'':'locked'}" id="t-lava" style="width:35px; height:35px"></button>
+                    <button onclick="setTool('spawn')" class="spawn ${inventario.spawn?'':'locked'}" id="t-spawn" style="width:35px; height:35px"></button>
+                    <button onclick="setTool('flag')" class="flag ${inventario.flag?'':'locked'}" id="t-flag" style="width:35px; height:35px"></button>
+                    <button onclick="tool='erase'" style="background:red; color:white; border:none; width:35px; height:35px; font-weight:bold">X</button>
+                    <button class="btn btn-cyan" style="width:80px; font-size:10px" onclick="salvar()">SALVAR</button>
+                    <button class="btn btn-purple" style="width:80px; font-size:10px" onclick="telaMenu()">SAIR</button>
+                </div>
+            `;
+            const g = document.getElementById('editor-grid');
+            for(let i=0; i<1800; i++) {
+                const c = document.createElement('div'); c.className = 'cell';
+                c.onmousedown=(e)=>{ if(e.buttons===1) aplicarTool(c); };
+                c.onmouseenter=(e)=>{ if(e.buttons===1) aplicarTool(c); };
+                g.appendChild(c);
+            }
+        }
+
+        function setTool(t) {
+            if(!inventario[t]) return alert("Você precisa comprar este bloco na loja!");
+            tool = t;
+        }
+
+        function aplicarTool(cell) {
+            if(tool !== 'erase' && !inventario[tool]) return;
+            cell.className = 'cell ' + (tool === 'erase' ? '' : tool);
+        }
+
+        function salvar() {
+            let d = [];
+            document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
+            if(!d.some(x => x.cl.includes('spawn'))) return alert("FALTA O SPAWN!");
+            if(!d.some(x => x.cl.includes('flag'))) return alert("FALTA A VITÓRIA!");
+            db.ref('mapas').push({autor: nick, dados: d});
+            alert("Mapa Publicado!"); telaMenu();
         }
 
         function telaGaleria() {
             document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list" style="max-height:250px; overflow-y:auto;"></div><button class="btn btn-purple" onclick="telaMenu()">VOLTAR</button></div>`;
             db.ref('mapas').once('value', s => {
                 s.forEach(m => {
-                    let div = document.createElement('div'); div.className = "map-item";
-                    div.innerHTML = `<button class="btn btn-cyan" style="margin:0" onclick="iniciar(JSON.parse('${JSON.stringify(m.val().dados)}'))">${m.val().autor}</button>`;
-                    if(isModerator) div.innerHTML += `<button class="btn-del" onclick="db.ref('mapas/${m.key}').remove(); telaGaleria();">X</button>`;
-                    document.getElementById('m-list').appendChild(div);
+                    let b = document.createElement('button'); b.className = "btn btn-cyan";
+                    b.innerText = "MAPA DE: " + m.val().autor.toUpperCase();
+                    b.onclick = () => iniciar(m.val().dados);
+                    document.getElementById('m-list').appendChild(b);
                 });
             });
         }
 
         function iniciar(dados) {
-            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player" style="background:${mySkin}"></div><div id="objs"></div></div></div>`;
+            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
             blocosAtuais = [];
             dados.forEach(d => {
                 let x = (d.id % 60) * 40; let y = Math.floor(d.id / 60) * 40;
@@ -195,34 +225,11 @@
             requestAnimationFrame(loop);
         }
 
-        // --- EDITOR ---
-        let tool = 'block';
-        function telaEditor() {
-            document.getElementById('main-content').innerHTML = `<div id="editor-grid"></div><div style="height:70px; background:#0a0a20; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;"><button onclick="tool='block'" class="block" style="width:30px; height:30px"></button><button onclick="tool='lava'" class="lava" style="width:30px; height:30px"></button><button onclick="tool='spawn'" class="spawn" style="width:30px; height:30px"></button><button onclick="tool='flag'" class="flag" style="width:30px; height:30px"></button><button onclick="tool='erase'" style="background:red; width:30px; height:30px">X</button><button class="btn btn-cyan" style="width:100px" onclick="salvar()">SALVAR</button><button class="btn btn-purple" style="width:80px" onclick="telaMenu()">SAIR</button></div>`;
-            for(let i=0; i<1800; i++) {
-                const c = document.createElement('div'); c.className = 'cell';
-                c.onmousedown=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
-                c.onmouseenter=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
-                document.getElementById('editor-grid').appendChild(c);
-            }
-        }
-        function salvar() {
-            let d = []; document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
-            if(!d.some(x => x.cl.includes('spawn'))) return alert("FALTA O SPAWN!");
-            db.ref('mapas').push({autor: nick, dados: d}); alert("Mapa Salvo!"); telaMenu();
-        }
-
         function admAddMoedas() {
             let t = document.getElementById('target-n').value;
             let v = parseInt(document.getElementById('target-v').value);
             db.ref('ranking/' + t + '/moedas').transaction(c => (c || 0) + v);
-            alert("Feito!");
-        }
-
-        function admBanir() {
-            let t = document.getElementById('target-n').value;
-            db.ref('bans/' + t).set(true);
-            alert("Banido!");
+            alert("Moedas Enviadas!");
         }
 
         setup();
