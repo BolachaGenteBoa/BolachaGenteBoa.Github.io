@@ -3,93 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER V50 - OMNI VERSION</title>
+    <title>BOLACHA MAKER V52 - FÍSICA INQUEBRÁVEL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
         body { margin: 0; font-family: sans-serif; background: var(--bg); color: #fff; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
-        
-        /* HEADER */
         #header { background: #0a0a20; height: 50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
-        
-        /* CONTAINER PRINCIPAL */
         #main-content { height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; width: 100%; overflow-y: auto; }
-        
-        /* MENU & CARDS */
         .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 480px; text-align: center; margin: 20px auto; }
-        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .btn:hover { transform: scale(1.02); opacity: 0.9; }
-
-        /* RANKING */
-        #rank-box { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; margin-bottom: 15px; text-align: left; border: 1px solid #222; }
-        .rank-line { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #222; }
-
-        /* GALERIA & PREVIEWS */
+        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; background: #eee; color: #000; }
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px; }
-        .map-card { background: #000; border: 2px solid var(--purple); border-radius: 10px; cursor: pointer; overflow: hidden; height: 130px; position: relative; }
-        .map-prev { transform: scale(0.18); transform-origin: top left; width: 555%; height: 555%; position: absolute; pointer-events: none; }
-        .map-info { position: absolute; bottom: 0; width: 100%; background: var(--purple); font-size: 11px; padding: 5px; font-weight: bold; z-index: 10; text-align: center; }
-
-        /* EDITOR */
-        #editor-container { width: 100%; height: 100%; overflow: auto; background: #050510; }
-        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); background: #111; position: relative; }
-        .cell { width: 40px; height: 40px; border: 0.1px solid rgba(255,255,255,0.03); box-sizing: border-box; }
-        #palette { position: fixed; right: 20px; top: 70px; display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.9); padding: 12px; border-radius: 12px; border: 2px solid var(--cyan); z-index: 10000; }
-        .p-item { width: 40px; height: 40px; border: 2px solid transparent; cursor: pointer; }
+        .map-card { background: #000; border: 2px solid var(--purple); border-radius: 10px; cursor: pointer; overflow: hidden; height: 140px; position: relative; display: flex; flex-direction: column; }
+        .prev-container { flex-grow: 1; position: relative; overflow: hidden; background: #111; }
+        .map-prev { position: absolute; width: 2400px; height: 800px; transform: scale(0.08); transform-origin: top left; pointer-events: none; }
+        .map-info { background: var(--purple); font-size: 11px; padding: 6px; font-weight: bold; text-align: center; color: #fff; }
+        #editor-container { width: 100vw; height: calc(100vh - 50px); overflow: auto; background: #000; }
+        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(20, 40px); width: 2400px; height: 800px; background-image: linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px); background-size: 40px 40px; }
+        .cell { width: 40px; height: 40px; }
+        #palette { position: fixed; right: 10px; top: 60px; display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 10px; border: 2px solid var(--cyan); z-index: 10000; }
+        .p-item { width: 35px; height: 35px; border: 2px solid transparent; cursor: pointer; }
         .p-item.active { border-color: #fff; box-shadow: 0 0 10px #fff; }
-
-        /* OBJETOS FÍSICOS */
-        .obj { position: absolute; width: 40px; height: 40px; }
-        .block { background: #555; border: 1px solid #333; }
-        .lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
-        .ice { background: #a0e9ff; box-shadow: inset 0 0 8px #fff; }
-        .spring { background: #50ff50; border-top: 5px solid #fff; }
+        .obj { position: absolute; width: 40px; height: 40px; box-sizing: border-box; }
+        .block { background: #666; border: 2px solid #444; }
+        .lava { background: var(--red); box-shadow: inset 0 0 15px #000; }
+        .ice { background: #a0e9ff; border: 1px solid #fff; }
+        .spring { background: #50ff50; border-top: 6px solid #fff; }
         .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
-        .spawn { border: 2px dashed var(--cyan); opacity: 0.6; }
-
-        /* JOGO & MULTIPLAYER */
-        #game-view { width: 100vw; height: calc(100vh - 50px); position: relative; overflow: hidden; background: #000; }
-        #world { position: absolute; transform-origin: 0 0; }
-        #player { position: absolute; width: 32px; height: 32px; background: var(--cyan); border: 2px solid #fff; border-radius: 4px; z-index: 100; box-shadow: 0 0 15px var(--cyan); }
-        .ghost { position: absolute; width: 32px; height: 32px; background: rgba(0,242,255,0.2); border: 1px solid #fff; border-radius: 4px; z-index: 90; }
-        
-        /* CHAT */
-        #chat-area { position: fixed; bottom: 20px; left: 10px; width: 240px; height: 180px; background: rgba(0,0,0,0.85); border: 1px solid var(--purple); border-radius: 10px; display: flex; flex-direction: column; z-index: 9000; }
-        #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 8px; font-size: 12px; color: #eee; }
-        #chat-in { background: #000; border: none; color: #fff; padding: 10px; border-top: 1px solid var(--purple); outline: none; }
+        .spawn { border: 2px dashed var(--cyan); background: rgba(0,242,255,0.1); }
+        #game-view { width: 100vw; height: calc(100vh - 50px); position: relative; overflow: hidden; }
+        #world { position: absolute; width: 2400px; height: 800px; }
+        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 4px; z-index: 100; box-shadow: 0 0 10px var(--cyan); }
+        .ghost { position: absolute; width: 30px; height: 30px; background: rgba(0,242,255,0.3); border: 1px solid #fff; border-radius: 4px; z-index: 90; }
+        #chat-area { position: fixed; bottom: 10px; left: 10px; width: 220px; height: 150px; background: rgba(0,0,0,0.8); border: 1px solid var(--purple); border-radius: 8px; display: flex; flex-direction: column; z-index: 9000; }
+        #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 11px; }
     </style>
 </head>
 <body>
-    <div id="header" class="hidden">
-        <div id="d-nick">...</div>
-        <div style="color:var(--yellow)">💰 <span id="coins">0</span></div>
-    </div>
-
+    <div id="header" class="hidden"><div id="d-nick">...</div><div style="color:var(--yellow)">💰 <span id="coins">0</span></div></div>
     <div id="main-content"></div>
-
-    <div id="chat-area" class="hidden">
-        <div id="chat-msgs"></div>
-        <input type="text" id="chat-in" placeholder="Pressione Enter para enviar...">
-    </div>
+    <div id="chat-area" class="hidden"><div id="chat-msgs"></div><input type="text" id="chat-in" placeholder="Chat..." style="background:#000; color:#fff; border:none; padding:8px; border-top:1px solid var(--purple);"></div>
 
     <script>
-        // CONFIGURAÇÃO FIREBASE
         const cfg = { apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o", authDomain: "bolachamakergame.firebaseapp.com", databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com", projectId: "bolachamakergame", appId: "1:207720367456:web:1a58957162be2b080f4a05" };
         firebase.initializeApp(cfg);
         const db = firebase.database();
 
-        // VARIÁVEIS GLOBAIS
         let nick = localStorage.getItem('maker_nick'), moedas = 0, inv = {}, game = false, loopId = null;
         let pX=0, pY=0, vX=0, vY=0, keys = {}, curMapData = [], currentMapId = "", brush = 'block';
 
-        // INICIALIZAÇÃO
         function init() {
             if(!nick) return login();
             document.getElementById('header').classList.remove('hidden');
-            
-            // Listener de Ranking e Moedas
             db.ref('ranking/'+nick).on('value', s => {
                 const d = s.val() || {moedas:500, inv:{}};
                 moedas = d.moedas || 0; inv = d.inv || {};
@@ -97,87 +63,30 @@
                 document.getElementById('d-nick').innerText = nick;
                 if(!game) menu();
             });
-
-            // Teclado
             window.onkeydown = e => keys[e.code] = true;
             window.onkeyup = e => keys[e.code] = false;
-
-            // Chat Enter
-            document.getElementById('chat-in').onkeydown = e => {
-                if(e.key==='Enter' && e.target.value.trim()){
-                    db.ref('chat').push({u:nick, m:e.target.value});
-                    e.target.value="";
-                }
-            };
         }
 
-        function login() {
-            document.getElementById('main-content').innerHTML = `
-                <div class="menu-card">
-                    <h2 style="color:var(--cyan)">BEM-VINDO</h2>
-                    <input type="text" id="nick-in" placeholder="Seu Nickname" style="padding:12px; width:85%; border-radius:8px; border:none; margin-bottom:10px;">
-                    <button class="btn" style="background:var(--cyan)" onclick="setNick()">ENTRAR NO JOGO</button>
-                </div>`;
-        }
-        function setNick() {
-            const v = document.getElementById('nick-in').value.trim();
-            if(v){ nick=v; localStorage.setItem('maker_nick', v); init(); }
-        }
-
-        // MENU PRINCIPAL
         function menu() {
             cancelAnimationFrame(loopId); game = false;
             document.getElementById('chat-area').classList.add('hidden');
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
-                    <h1 style="color:var(--cyan); margin-bottom:5px;">BOLACHA MAKER</h1>
-                    <div id="rank-box">Carregando TOP 5...</div>
-                    <button class="btn" style="background:var(--cyan)" onclick="galeria()">▶ JOGAR FASES</button>
-                    <button class="btn" style="background:var(--purple); color:#fff" onclick="editor()">🛠 CRIAR MAPA</button>
-                    <button class="btn" style="background:var(--yellow); color:#000" onclick="abrirLoja()">🛒 LOJA</button>
+                    <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
+                    <button class="btn" style="background:var(--cyan)" onclick="galeria()">JOGAR</button>
+                    <button class="btn" style="background:var(--purple); color:#fff" onclick="editor()">CRIAR</button>
+                    <button class="btn" style="background:var(--yellow)" onclick="abrirLoja()">LOJA</button>
                 </div>`;
-            
-            db.ref('ranking').orderByChild('moedas').limitToLast(5).once('value', s => {
-                let h = "<b>🏆 RANKING GERAL</b><br>";
-                let p = []; s.forEach(u => p.push({n:u.key, m:u.val().moedas}));
-                p.reverse().forEach((u,i) => h += `<div class="rank-line"><span>${i+1}. ${u.n}</span><span>$${Math.floor(u.m)}</span></div>`);
-                document.getElementById('rank-box').innerHTML = h;
-            });
         }
 
-        // LOJA
-        function abrirLoja() {
-            const itens = [
-                {id:'lava', n:'Lava Mortal', p:500, c:'var(--red)'},
-                {id:'ice', n:'Bloco de Gelo', p:800, c:'#a0e9ff'},
-                {id:'spring', n:'Mola de Pulo', p:1200, c:'#50ff50'}
-            ];
-            let h = `<h2>LOJA</h2>`;
-            itens.forEach(i => {
-                const tem = inv[i.id];
-                h += `<button class="btn" style="background:${tem?'#333':i.c}; color:${tem?'#777':'#000'}" onclick="${tem?'':`comprar('${i.id}',${i.p})`}">
-                    ${i.n} ${tem ? '(JÁ COMPRADO)' : '- $'+i.p}
-                </button>`;
-            });
-            h += `<button class="btn" onclick="menu()">VOLTAR</button>`;
-            document.getElementById('main-content').innerHTML = `<div class="menu-card">${h}</div>`;
-        }
-        function comprar(id, p) {
-            if(moedas >= p) {
-                db.ref('ranking/'+nick).update({ moedas: moedas - p, [`inv/${id}`]: true }).then(() => alert("Comprado com sucesso!"));
-            } else { alert("Moedas insuficientes!"); }
-        }
-
-        // EDITOR
         function editor() {
             let h = `<div id="editor-container"><div id="palette">
-                <div class="p-item block active" onclick="selB('block',this)" style="background:#555"></div>
-                <div class="p-item spawn" onclick="selB('spawn',this)" style="border:1px dashed #fff"></div>
+                <div class="p-item block active" onclick="selB('block',this)" style="background:#666"></div>
+                <div class="p-item spawn" onclick="selB('spawn',this)" style="border:1px dashed var(--cyan)"></div>
                 <div class="p-item flag" onclick="selB('flag',this)" style="background:var(--yellow)"></div>`;
             if(inv.lava) h += `<div class="p-item lava" onclick="selB('lava',this)" style="background:var(--red)"></div>`;
             if(inv.ice) h += `<div class="p-item ice" onclick="selB('ice',this)" style="background:#a0e9ff"></div>`;
             if(inv.spring) h += `<div class="p-item spring" onclick="selB('spring',this)" style="background:#50ff50"></div>`;
-            
             h += `<button onclick="salvarMapa()" style="margin-top:10px">SALVAR</button><button onclick="menu()">SAIR</button></div><div id="editor-grid"></div></div>`;
             document.getElementById('main-content').innerHTML = h;
             const g = document.getElementById('editor-grid');
@@ -193,18 +102,17 @@
             if(d.length > 0){ db.ref('mapas').push({autor:nick, dados:d}); menu(); }
         }
 
-        // GALERIA
         function galeria() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card" style="max-width:550px"><h2>GALERIA DE FASES</h2><div id="m-grid" class="map-grid"></div><button class="btn" onclick="menu()">VOLTAR</button></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card" style="max-width:550px"><h2>GALERIA</h2><div id="m-grid" class="map-grid"></div><button class="btn" onclick="menu()">VOLTAR</button></div>`;
             db.ref('mapas').once('value', s => {
                 s.forEach(m => {
                     const d = m.val();
                     const card = document.createElement('div'); card.className = 'map-card';
-                    card.innerHTML = `<div class="map-prev" id="p-${m.key}"></div><div class="map-info">${d.autor.toUpperCase()}</div>`;
+                    card.innerHTML = `<div class="prev-container"><div class="map-prev" id="p-${m.key}"></div></div><div class="map-info">${d.autor.toUpperCase()}</div>`;
                     card.onclick = () => play(d.dados, m.key);
                     document.getElementById('m-grid').appendChild(card);
                     const pCont = document.getElementById(`p-${m.key}`);
-                    d.dados.slice(0,100).forEach(b => {
+                    d.dados.forEach(b => {
                         const o = document.createElement('div'); o.className = 'obj ' + b.cl;
                         o.style.left = (b.id%60)*40+'px'; o.style.top = Math.floor(b.id/60)*40+'px';
                         pCont.appendChild(o);
@@ -213,101 +121,9 @@
             });
         }
 
-        // JOGO
         function play(dados, id) {
             cancelAnimationFrame(loopId); game = true; curMapData = dados; currentMapId = id; vX=0; vY=0;
             document.getElementById('chat-area').classList.remove('hidden');
             document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
-            
-            // Desenhar Mapa
             dados.forEach(b => {
-                const o = document.createElement('div'); const x=(b.id%60)*40, y=Math.floor(b.id/60)*40;
-                o.className = 'obj ' + b.cl; o.style.left = x+'px'; o.style.top = y+'px';
-                document.getElementById('objs').appendChild(o);
-                if(b.cl==='spawn') { pX=x; pY=y; }
-            });
-
-            // Chat Listener
-            db.ref('chat').off();
-            db.ref('chat').limitToLast(15).on('child_added', s => {
-                const m = s.val();
-                document.getElementById('chat-msgs').innerHTML += `<div><b style="color:var(--cyan)">${m.u}:</b> ${m.m}</div>`;
-                document.getElementById('chat-msgs').scrollTop = 9999;
-            });
-
-            // Multiplayer Listener
-            db.ref(`online/${id}`).on('value', s => {
-                document.querySelectorAll('.ghost').forEach(g => g.remove());
-                const pls = s.val();
-                for(let p in pls) if(p !== nick && Date.now() - pls[p].t < 3000){
-                    const g = document.createElement('div'); g.className='ghost';
-                    g.style.left = pls[p].x+'px'; g.style.top = pls[p].y+'px';
-                    document.getElementById('world').appendChild(g);
-                }
-            });
-
-            loop();
-        }
-
-        function loop() {
-            if(!game) return;
-            vY += 0.8;
-            
-            let f = 0.8;
-            let onIce = false;
-            // Checar se está no gelo
-            curMapData.forEach(b => {
-                const bx=(b.id%60)*40, by=Math.floor(b.id/60)*40;
-                if(pX < bx + 40 && pX + 32 > bx && pY + 33 >= by && pY + 30 <= by && b.cl === 'ice') onIce = true;
-            });
-            if(onIce) f = 0.98;
-
-            if(keys['KeyA'] || keys['ArrowLeft']) vX = onIce ? vX - 0.25 : -6.5; 
-            else if(keys['KeyD'] || keys['ArrowRight']) vX = onIce ? vX + 0.25 : 6.5; 
-            else vX *= f;
-
-            pX += vX; col(true);
-            pY += vY; col(false);
-
-            if((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && vY === 0) vY = -15.5;
-            if(pY > 1500) play(curMapData, currentMapId); // LIMBO
-
-            // Enviar posição multiplayer
-            db.ref(`online/${currentMapId}/${nick}`).set({ x: pX, y: pY, t: Date.now() });
-
-            // Câmera e Player
-            document.getElementById('world').style.transform = `translate(${window.innerWidth/2-pX}px, ${window.innerHeight/2-pY}px)`;
-            document.getElementById('player').style.left = pX+'px'; document.getElementById('player').style.top = pY+'px';
-            loopId = requestAnimationFrame(loop);
-        }
-
-        function col(isX) {
-            curMapData.forEach(b => {
-                const bx=(b.id%60)*40, by=Math.floor(b.id/60)*40;
-                if(Math.hypot(pX - bx, pY - by) < 100) {
-                    if(pX < bx + 40 && pX + 32 > bx && pY < by + 40 && pY + 32 > by) {
-                        if(['block', 'ice', 'spring'].includes(b.cl)) {
-                            if(isX) {
-                                if(vX > 0) pX = bx - 32; else if(vX < 0) pX = bx + 40;
-                                vX = 0;
-                            } else {
-                                if(vY > 0) { pY = by - 32; vY = b.cl==='spring' ? -26 : 0; }
-                                else if(vY < 0) { pY = by + 40; vY = 0; }
-                            }
-                        }
-                        if(b.cl==='lava') play(curMapData, currentMapId);
-                        if(b.cl==='flag') { 
-                            game=false; 
-                            db.ref('ranking/'+nick+'/moedas').transaction(c=>(c||0)+150); 
-                            alert("Fase Concluída! +150 Moedas");
-                            menu(); 
-                        }
-                    }
-                }
-            });
-        }
-
-        init();
-    </script>
-</body>
-</html>
+                const o = document.createElement('div'); const x=(b.id%60)*4
