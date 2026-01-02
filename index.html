@@ -3,185 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER V57 - COLISÃO REAL</title>
+    <title>BOLACHA MAKER V59 - ZERO CLIP</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: #fff; overflow: hidden; touch-action: none; }
+        :root { --neon: #00f2ff; --p: #bc13fe; --bg: #05050a; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Courier New', Courier, monospace; overflow: hidden; touch-action: none; }
+        #ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        #header { height: 60px; background: rgba(0,0,0,0.8); border-bottom: 2px solid var(--neon); pointer-events: auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .content { pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); }
+        .card { background: #111; border: 2px solid var(--p); padding: 30px; border-radius: 15px; text-align: center; width: 300px; }
+        .btn { background: var(--neon); color: #000; border: none; padding: 12px 20px; margin: 10px 0; width: 100%; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        canvas { display: block; background: #000; image-rendering: pixelated; }
+        #editor-bar { position: fixed; right: 10px; top: 70px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 10px; }
+        .tool { width: 40px; height: 40px; border: 2px solid transparent; cursor: pointer; }
+        .tool.active { border-color: #fff; box-shadow: 0 0 10px var(--neon); }
         .hidden { display: none !important; }
-        #header { background: #0a0a20; height: 50px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
-        #main-content { height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; width: 100%; }
-        
-        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 480px; text-align: center; }
-        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; background: #eee; color: #000; }
-
-        #game-view { width: 100vw; height: calc(100vh - 50px); position: relative; overflow: hidden; background: #000; }
-        #world { position: absolute; width: 2400px; height: 800px; }
-        
-        /* O Player deve estar sempre visível mas respeitar a colisão */
-        #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 4px; z-index: 100; box-shadow: 0 0 10px var(--cyan); }
-        
-        .obj { width: 40px; height: 40px; position: absolute; box-sizing: border-box; z-index: 10; }
-        .block { background: #444; border: 2px solid #666; } /* Bloco sólido */
-        .lava { background: var(--red); box-shadow: inset 0 0 10px #000; }
-        .ice { background: #a0e9ff; border: 1px solid #fff; }
-        .spring { background: #50ff50; border-top: 6px solid #fff; }
-        .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
-        .spawn { border: 2px dashed var(--cyan); opacity: 0.3; }
-
-        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); width: 2400px; height: 800px; background: #111; }
-        .cell { width: 40px; height: 40px; border: 0.1px solid #222; }
     </style>
 </head>
 <body>
-    <div id="header" class="hidden"><div id="d-nick"></div><div style="color:var(--yellow)">💰 <span id="coins">0</span></div></div>
-    <div id="main-content"></div>
 
-    <script>
-        const cfg = { apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o", authDomain: "bolachamakergame.firebaseapp.com", databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com", projectId: "bolachamakergame", appId: "1:207720367456:web:1a58957162be2b080f4a05" };
-        firebase.initializeApp(cfg);
-        const db = firebase.database();
+<div id="ui-layer">
+    <div id="header" class="hidden">
+        <div id="p-nick">BOLACHA</div>
+        <div style="color: #ffcc00;">MOEDAS: <span id="p-coins">0</span></div>
+    </div>
+    <div id="main-ui" class="content"></div>
+</div>
 
-        let nick = localStorage.getItem('maker_nick'), moedas = 0, inv = {}, game = false;
-        let pX=0, pY=0, vX=0, vY=0, keys = {}, grid = {}, brush = 'block';
+<div id="editor-bar" class="hidden">
+    <div class="tool" id="t-block" style="background:#555" onclick="setT('block')"></div>
+    <div class="tool" id="t-lava" style="background:#f44" onclick="setT('lava')"></div>
+    <div class="tool" id="t-ice" style="background:#aef" onclick="setT('ice')"></div>
+    <div class="tool" id="t-spring" style="background:#5f5" onclick="setT('spring')"></div>
+    <div class="tool" id="t-flag" style="background:#ff0" onclick="setT('flag')"></div>
+    <div class="tool" id="t-spawn" style="border:1px dashed #fff" onclick="setT('spawn')"></div>
+    <button class="btn" onclick="saveMap()" style="font-size: 10px;">SALVAR</button>
+    <button class="btn" onclick="goMenu()" style="font-size: 10px; background: #f44;">X</button>
+</div>
 
-        function init() {
-            if(!nick) return login();
-            document.getElementById('header').classList.remove('hidden');
-            db.ref('ranking/'+nick).on('value', s => {
-                const d = s.val() || {moedas:500};
-                moedas = d.moedas; document.getElementById('coins').innerText = Math.floor(moedas);
-                document.getElementById('d-nick').innerText = nick;
-                if(!game) menu();
-            });
-            window.onkeydown = e => keys[e.code] = true;
-            window.onkeyup = e => keys[e.code] = false;
+<canvas id="gameCanvas"></canvas>
+
+<script>
+// CONFIG FIREBASE
+const fb = {
+    apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o",
+    authDomain: "bolachamakergame.firebaseapp.com",
+    databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com",
+    projectId: "bolachamakergame",
+    appId: "1:207720367456:web:1a58957162be2b080f4a05"
+};
+firebase.initializeApp(fb);
+const db = firebase.database();
+
+// VARS GLOBAIS
+let nick = localStorage.getItem('bolacha_nick'), coins = 0, state = 'menu';
+let canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+let grid = {}, mapID = '', brush = 'block';
+let player = { x:0, y:0, vx:0, vy:0, w:30, h:30, speed:0.8, jump: -12 };
+let keys = {}, cam = { x:0, y:0 };
+
+function init() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if(!nick) showLogin(); else startSession();
+}
+
+function showLogin() {
+    document.getElementById('main-ui').innerHTML = `
+    <div class="card">
+        <h2>BOLACHA MAKER</h2>
+        <input type="text" id="n-in" placeholder="SEU NICK" style="width:100%; padding:10px; margin:10px 0;">
+        <button class="btn" onclick="doLogin()">ENTRAR</button>
+    </div>`;
+}
+
+function doLogin() {
+    let v = document.getElementById('n-in').value.trim();
+    if(v) { nick = v; localStorage.setItem('bolacha_nick', v); startSession(); }
+}
+
+function startSession() {
+    document.getElementById('header').classList.remove('hidden');
+    db.ref('ranking/'+nick).on('value', s => {
+        let d = s.val() || { moedas: 100 };
+        coins = d.moedas;
+        document.getElementById('p-nick').innerText = nick;
+        document.getElementById('p-coins').innerText = Math.floor(coins);
+        if(state === 'menu') goMenu();
+    });
+}
+
+function goMenu() {
+    state = 'menu';
+    document.getElementById('editor-bar').classList.add('hidden');
+    document.getElementById('main-ui').classList.remove('hidden');
+    document.getElementById('main-ui').innerHTML = `
+    <div class="card" style="border-color: var(--neon)">
+        <h1>MENU</h1>
+        <button class="btn" onclick="goGaleria()">JOGAR</button>
+        <button class="btn" onclick="goEditor()">CRIAR</button>
+    </div>`;
+}
+
+// ENGINE DE COLISÃO ABSOLUTA
+function isSolid(px, py) {
+    // Checagem de 4 pontos (cantos do player)
+    const points = [[0,0], [player.w, 0], [0, player.h], [player.w, player.h]];
+    for(let p of points) {
+        let tx = Math.floor((px + p[0]) / 40);
+        let ty = Math.floor((py + p[1]) / 40);
+        let t = grid[`${tx},${ty}`];
+        if(t === 'block' || t === 'ice' || t === 'spring') return { solid: true, type: t, tx: tx*40, ty: ty*40 };
+    }
+    return false;
+}
+
+function getTile(px, py) {
+    let tx = Math.floor((px + player.w/2) / 40);
+    let ty = Math.floor((py + player.h/2) / 40);
+    return grid[`${tx},${ty}`];
+}
+
+function loop() {
+    if(state === 'play') {
+        update();
+        render();
+    } else if (state === 'edit') {
+        render();
+    }
+    requestAnimationFrame(loop);
+}
+
+function update() {
+    // Gravidade
+    player.vy += 0.6;
+    if(player.vy > 15) player.vy = 15;
+
+    // Horizontal
+    if(keys['ArrowLeft'] || keys['KeyA']) player.vx -= player.speed;
+    else if(keys['ArrowRight'] || keys['KeyD']) player.vx += player.speed;
+    else player.vx *= 0.8;
+
+    if(player.vx > 7) player.vx = 7;
+    if(player.vx < -7) player.vx = -7;
+
+    // --- MOVIMENTO X (PASSO A PASSO) ---
+    let nextX = player.x + player.vx;
+    let hitX = isSolid(nextX, player.y);
+    if(hitX) {
+        if(player.vx > 0) player.x = hitX.tx - player.w - 0.1;
+        else if(player.vx < 0) player.x = hitX.tx + 40.1;
+        player.vx = 0;
+    } else {
+        player.x = nextX;
+    }
+
+    // --- MOVIMENTO Y (PASSO A PASSO) ---
+    let nextY = player.y + player.vy;
+    let hitY = isSolid(player.x, nextY);
+    if(hitY) {
+        if(player.vy > 0) { // Chão
+            player.y = hitY.ty - player.h - 0.1;
+            if(hitY.type === 'spring') player.vy = -18; else player.vy = 0;
+        } else { // Teto
+            player.y = hitY.ty + 40.1;
+            player.vy = 0;
         }
+    } else {
+        player.y = nextY;
+    }
 
-        function menu() {
-            game = false;
-            document.getElementById('main-content').innerHTML = `
-                <div class="menu-card">
-                    <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
-                    <button class="btn" onclick="galeria()">JOGAR</button>
-                    <button class="btn" onclick="editor()">CRIAR</button>
-                </div>`;
+    // Pulo
+    if((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && isSolid(player.x, player.y + 2)) {
+        player.vy = player.jump;
+    }
+
+    // Morte/Win
+    let current = getTile(player.x, player.y);
+    if(current === 'lava' || player.y > 2000) respawn();
+    if(current === 'flag') win();
+
+    // Câmera
+    cam.x += (player.x - canvas.width/2 - cam.x) * 0.1;
+    cam.y += (player.y - canvas.height/2 - cam.y) * 0.1;
+}
+
+function render() {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.translate(-cam.x, -cam.y);
+
+    // Grid de referência
+    ctx.strokeStyle = '#111';
+    for(let i=0; i<3000; i+=40) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1000); ctx.stroke();
+    }
+
+    // Blocos
+    for(let k in grid) {
+        let [tx, ty] = k.split(',').map(Number);
+        let type = grid[k];
+        ctx.fillStyle = type === 'block' ? '#555' : 
+                        type === 'lava' ? '#f44' : 
+                        type === 'ice' ? '#aef' : 
+                        type === 'spring' ? '#5f5' : '#ff0';
+        if(type === 'spawn') {
+            ctx.strokeStyle = var(--neon);
+            ctx.strokeRect(tx*40, ty*40, 40, 40);
+            continue;
         }
+        ctx.fillRect(tx*40, ty*40, 40, 40);
+        if(type === 'block') ctx.strokeRect(tx*40+2, ty*40+2, 36, 36);
+    }
 
-        // Função crucial: Checa se o ponto (x,y) é um bloco sólido
-        function isSolid(x, y) {
-            const tx = Math.floor(x / 40);
-            const ty = Math.floor(y / 40);
-            const type = grid[`${tx},${ty}`];
-            // APENAS estes tipos impedem o movimento
-            return (type === 'block' || type === 'ice' || type === 'spring');
-        }
+    // Player
+    ctx.fillStyle = var(--neon);
+    ctx.shadowBlur = 10; ctx.shadowColor = var(--neon);
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+    ctx.shadowBlur = 0;
 
-        function getTileType(x, y) {
-            return grid[`${Math.floor(x/40)},${Math.floor(y/40)}`];
-        }
+    ctx.restore();
+}
 
-        function play(dados) {
-            game = true; grid = {}; vX=vY=0;
-            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
-            
-            dados.forEach(b => {
-                const tx = b.id % 60, ty = Math.floor(b.id / 60);
-                grid[`${tx},${ty}`] = b.cl; // Salva no mapa de colisão
-                const o = document.createElement('div');
-                o.className = 'obj ' + b.cl;
-                o.style.left = (tx*40)+'px'; o.style.top = (ty*40)+'px';
-                document.getElementById('objs').appendChild(o);
-                if(b.cl==='spawn') { pX = tx*40; pY = ty*40; }
-            });
-            requestAnimationFrame(loop);
-        }
+// SISTEMA DE MAPAS
+function goGaleria() {
+    state = 'menu';
+    document.getElementById('main-ui').innerHTML = `<div class="card"><h2>MAPAS</h2><div id="m-list"></div><button class="btn" onclick="goMenu()">VOLTAR</button></div>`;
+    db.ref('mapas').limitToLast(10).once('value', s => {
+        s.forEach(m => {
+            let d = m.val();
+            let b = document.createElement('button');
+            b.className = 'btn'; b.style.background = '#222'; b.style.color = '#fff';
+            b.innerText = `DE: ${d.autor}`;
+            b.onclick = () => loadMap(d.dados);
+            document.getElementById('m-list').appendChild(b);
+        });
+    });
+}
 
-        function loop() {
-            if(!game) return;
+function loadMap(dados) {
+    grid = {};
+    dados.forEach(o => {
+        let tx = o.id % 60, ty = Math.floor(o.id/60);
+        grid[`${tx},${ty}`] = o.cl;
+        if(o.cl === 'spawn') { player.x = tx*40; player.y = ty*40; }
+    });
+    state = 'play';
+    document.getElementById('main-ui').classList.add('hidden');
+}
 
-            vY += 0.8; // Gravidade
-            if(vY > 16) vY = 16;
+function respawn() {
+    for(let k in grid) if(grid[k] === 'spawn') {
+        let [tx, ty] = k.split(',').map(Number);
+        player.x = tx*40; player.y = ty*40;
+        player.vx = 0; player.vy = 0;
+    }
+}
 
-            // Movimento X
-            let speed = 6;
-            if(isSolid(pX+15, pY+32) && getTileType(pX+15, pY+32) === 'ice') speed = 8; // Gelo corre mais
+function win() {
+    state = 'menu';
+    db.ref('ranking/'+nick+'/moedas').transaction(c => (c||0)+100);
+    alert("VENCEU! +100 MOEDAS");
+    goMenu();
+}
 
-            if(keys['ArrowLeft'] || keys['KeyA']) vX = -speed;
-            else if(keys['ArrowRight'] || keys['KeyD']) vX = speed;
-            else vX *= 0.8;
+// EDITOR
+function goEditor() {
+    state = 'edit';
+    grid = {};
+    document.getElementById('main-ui').classList.add('hidden');
+    document.getElementById('editor-bar').classList.remove('hidden');
+    setT('block');
+}
 
-            // --- FÍSICA EIXO X ---
-            pX += vX;
-            if(isSolid(pX, pY+5) || isSolid(pX+30, pY+5) || isSolid(pX, pY+25) || isSolid(pX+30, pY+25)) {
-                if(vX > 0) pX = Math.floor((pX+30)/40)*40 - 30.1;
-                else if(vX < 0) pX = Math.floor(pX/40)*40 + 40.1;
-                vX = 0;
-            }
+function setT(t) {
+    brush = t;
+    document.querySelectorAll('.tool').forEach(e => e.classList.remove('active'));
+    document.getElementById('t-'+t).classList.add('active');
+}
 
-            // --- FÍSICA EIXO Y ---
-            pY += vY;
-            if(isSolid(pX+2, pY) || isSolid(pX+28, pY) || isSolid(pX+2, pY+30) || isSolid(pX+28, pY+30)) {
-                if(vY > 0) { // Chão
-                    const tileAbaixo = getTileType(pX+15, pY+30);
-                    pY = Math.floor((pY+30)/40)*40 - 30.1;
-                    vY = (tileAbaixo === 'spring') ? -24 : 0;
-                } else if(vY < 0) { // Teto
-                    pY = Math.floor(pY/40)*40 + 40.1;
-                    vY = 0;
-                }
-            }
+canvas.addEventListener('mousedown', e => {
+    if(state !== 'edit') return;
+    let tx = Math.floor((e.clientX + cam.x) / 40);
+    let ty = Math.floor((e.clientY + cam.y) / 40);
+    grid[`${tx},${ty}`] = brush;
+});
 
-            // --- SENSORES DE MORTE/VITÓRIA ---
-            const currentTile = getTileType(pX+15, pY+15);
-            if(currentTile === 'lava' || pY > 900) { play(Object.entries(grid).map(([k,v])=>({id:parseInt(k.split(',')[1])*60+parseInt(k.split(',')[0]),cl:v}))); return; }
-            if(currentTile === 'flag') { game=false; db.ref('ranking/'+nick+'/moedas').transaction(c=>c+100); menu(); return; }
+function saveMap() {
+    let d = [];
+    for(let k in grid) {
+        let [tx, ty] = k.split(',').map(Number);
+        d.push({ id: ty*60 + tx, cl: grid[k] });
+    }
+    db.ref('mapas').push({ autor: nick, dados: d });
+    alert("MAPA SALVO!");
+    goMenu();
+}
 
-            // Pulo
-            if((keys['ArrowUp'] || keys['Space'] || keys['KeyW']) && isSolid(pX+15, pY+32)) vY = -15;
+function setT(t) { brush = t; document.querySelectorAll('.tool').forEach(el=>el.classList.remove('active')); document.getElementById('t-'+t).classList.add('active'); }
 
-            // Câmera e Desenho
-            document.getElementById('player').style.left = pX+'px';
-            document.getElementById('player').style.top = pY+'px';
-            document.getElementById('world').style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
-            
-            requestAnimationFrame(loop);
-        }
+window.onkeydown = e => keys[e.code] = true;
+window.onkeyup = e => keys[e.code] = false;
 
-        function editor() {
-            let h = `<div id="palette" style="position:fixed;top:60px;right:10px;z-index:100;background:#000;padding:10px;border:1px solid var(--cyan)">
-                <div class="p-item block" style="width:30px;height:30px;background:#444;margin-bottom:5px;cursor:pointer" onclick="brush='block'"></div>
-                <div class="p-item lava" style="width:30px;height:30px;background:var(--red);margin-bottom:5px;cursor:pointer" onclick="brush='lava'"></div>
-                <div class="p-item spawn" style="width:30px;height:30px;border:1px dashed #fff;margin-bottom:5px;cursor:pointer" onclick="brush='spawn'"></div>
-                <div class="p-item flag" style="width:30px;height:30px;background:var(--yellow);margin-bottom:5px;cursor:pointer" onclick="brush='flag'"></div>
-                <button onclick="salvar()">SALVAR</button><button onclick="menu()">SAIR</button>
-            </div><div id="editor-grid" style="overflow:auto;height:calc(100vh - 50px)">`;
-            for(let i=0; i<1200; i++) h += `<div class="cell" onclick="this.className='cell '+brush; this.dataset.t=brush"></div>`;
-            document.getElementById('main-content').innerHTML = h + `</div>`;
-            window.salvar = () => {
-                const d = []; document.querySelectorAll('.cell').forEach((c,i)=>{ if(c.dataset.t) d.push({id:i, cl:c.dataset.t}); });
-                db.ref('mapas').push({autor:nick, dados:d}); menu();
-            };
-        }
+// Helpers para estilo dinâmico
+function var(name) { return getComputedStyle(document.documentElement).getPropertyValue(name); }
 
-        function galeria() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>GALERIA</h2><div id="m-g"></div><button class="btn" onclick="menu()">VOLTAR</button></div>`;
-            db.ref('mapas').limitToLast(10).once('value', s => {
-                s.forEach(m => {
-                    const b = document.createElement('button'); b.className='btn';
-                    b.innerText = "MAPA DE: " + m.val().autor.toUpperCase(); 
-                    b.onclick=()=>play(m.val().dados);
-                    document.getElementById('m-g').appendChild(b);
-                });
-            });
-        }
+init();
+loop();
 
-        function login() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NICKNAME</h2><input id="ni" style="padding:10px;width:80%"><br><br><button class="btn" onclick="nick=document.getElementById('ni').value;localStorage.setItem('maker_nick',nick);init()">ENTRAR</button></div>`;
-        }
-
-        init();
-    </script>
+</script>
 </body>
 </html>
