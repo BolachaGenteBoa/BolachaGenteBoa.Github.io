@@ -3,130 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V37 BIG SCALE</title>
+    <title>BOLACHA MAKER - V38 MULTIPLAYER</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
-
-        /* HEADER FIXO */
-        #header { background: #0a0a20; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
         
-        /* CONTAINER DO JOGO COM AUTO-ZOOM */
-        #game-view { width: 100vw; height: calc(100vh - 60px); position: relative; overflow: hidden; background: #000; }
-        #world { position: absolute; transform-origin: center; transition: transform 0.1s ease-out; will-change: transform; }
-
-        /* ELEMENTOS ESCALADOS (60px base) */
-        .obj { position: absolute; width: 60px; height: 60px; box-sizing: border-box; }
-        .block { background: #444; border: 1px solid #222; box-shadow: inset 0 0 15px #000; }
-        .lava { background: var(--red); box-shadow: 0 0 20px var(--red); animation: pulse 1s infinite; }
-        .ice { background: #b0f0ff; border: 2px solid #fff; box-shadow: inset 0 0 10px #fff; }
-        .spring { background: #4fff4f; border-top: 8px solid #fff; }
-        .flag { background: var(--yellow); clip-path: polygon(0% 0%, 100% 50%, 0% 100%, 20% 50%); }
-        .spawn { border: 3px dashed var(--cyan); opacity: 0.4; border-radius: 50%; }
-
-        /* PLAYER ESCALADO */
-        #player { position: absolute; width: 45px; height: 45px; background: var(--cyan); border: 3px solid #fff; border-radius: 8px; z-index: 100; box-shadow: 0 0 20px var(--cyan); }
-
-        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
-
-        /* PAINEL ADM E MENUS */
-        #adm-btn { background: var(--red); color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        #adm-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .menu-card { background: #0a0a25; padding: 30px; border-radius: 20px; border: 2px solid var(--purple); width: 85%; max-width: 400px; text-align: center; }
+        #header { background: #0a0a20; height: 55px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
         
-        /* CONTROLES MOBILE */
-        #mobile-controls { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box; z-index: 5000; pointer-events: none; }
-        .m-btn { width: 85px; height: 85px; background: rgba(255,255,255,0.1); border: 3px solid var(--cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; color: white; pointer-events: auto; }
+        /* CHAT SYSTEM */
+        #chat-area { position: fixed; bottom: 120px; left: 10px; width: 250px; height: 200px; background: rgba(0,0,0,0.7); border-radius: 10px; display: flex; flex-direction: column; z-index: 8000; border: 1px solid var(--purple); }
+        #chat-msgs { flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 12px; }
+        #chat-input { background: #000; border: none; color: #fff; padding: 8px; border-top: 1px solid var(--purple); border-radius: 0 0 10px 10px; }
+
+        /* MULTIPLAYER GHOSTS */
+        .ghost { position: absolute; width: 35px; height: 35px; background: rgba(255,255,255,0.3); border: 1px solid #fff; border-radius: 6px; z-index: 90; pointer-events: none; transition: 0.1s linear; }
+        .ghost-name { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; white-space: nowrap; background: rgba(0,0,0,0.5); padding: 2px 5px; border-radius: 4px; }
+
+        /* GALERIA ESTILO FOTO (V37 sugestão) */
+        .map-card { background: #1a1a35; border-radius: 15px; border: 2px solid var(--purple); overflow: hidden; margin: 10px; width: 100%; max-width: 300px; }
+        .map-thumb { height: 120px; background: #000; position: relative; }
+        .map-info { padding: 10px; background: var(--purple); color: white; font-weight: bold; text-align: center; }
+
+        #main-content { height: calc(100vh - 55px); display: flex; align-items: center; justify-content: center; }
+        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 420px; text-align: center; }
+        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="header" class="hidden">
         <div id="display-nick">...</div>
-        <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="abrirAdm()">ADM</button>
+        <div style="color:var(--yellow); font-weight:bold;">💰 <span id="coins">0</span></div>
+        <button id="adm-btn" class="hidden" onclick="abrirAdm()" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:4px;">ADM</button>
     </div>
 
     <div id="main-content">
-        <div id="login-screen" class="menu-card">
-            <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
-            <input type="text" id="nick-input" placeholder="Seu Nick..." style="width:100%; padding:12px; margin-bottom:10px; background:#000; color:#fff; border:1px solid var(--purple); border-radius:8px; text-align:center;">
-            <button class="btn-cyan" onclick="salvarNick()" style="width:100%; padding:15px; border-radius:8px; font-weight:bold; cursor:pointer;">ENTRAR</button>
+        <div id="loading-screen">
+            <h2 style="color:var(--cyan)">CARREGANDO UNIVERSO...</h2>
         </div>
     </div>
 
-    <div id="game-view" class="hidden">
-        <div id="world">
-            <div id="player"></div>
-            <div id="objs"></div>
-        </div>
-    </div>
-
-    <div id="adm-panel" class="hidden">
-        <div class="menu-card">
-            <h2 style="color:var(--red)">PAINEL SUPREMO</h2>
-            <input type="text" id="global-input" placeholder="Mensagem Global...">
-            <button onclick="enviarMensagemGlobal()" style="width:100%; padding:10px; margin:5px 0; background:var(--red); color:#fff; border:none; border-radius:5px;">ENVIAR AVISO</button>
-            <button onclick="document.getElementById('adm-panel').classList.add('hidden')" style="width:100%; padding:10px; margin-top:10px;">FECHAR</button>
-        </div>
+    <div id="chat-area" class="hidden">
+        <div id="chat-msgs"></div>
+        <input type="text" id="chat-input" placeholder="Aperte Enter para falar...">
     </div>
 
     <script>
-        // ... (Configuração Firebase igual às versões anteriores) ...
         const firebaseConfig = { apiKey: "AIzaSyCBSYgExCqXc8dmkB2yyBuznofShzE-h7o", authDomain: "bolachamakergame.firebaseapp.com", databaseURL: "https://bolachamakergame-default-rtdb.firebaseio.com", projectId: "bolachamakergame", appId: "1:207720367456:web:1a58957162be2b080f4a05" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        let nick = localStorage.getItem('maker_nick'), moedas = 0, currentMapId = "lobby";
         let pX=0, pY=0, gameActive=false;
-        let nick = localStorage.getItem('maker_nick');
 
-        function salvarNick() {
-            nick = document.getElementById('nick-input').value.trim();
-            if(nick.length > 1) { localStorage.setItem('maker_nick', nick); initApp(); }
+        // --- SISTEMA DE CHAT ---
+        function setupChat() {
+            document.getElementById('chat-area').classList.remove('hidden');
+            const input = document.getElementById('chat-input');
+            input.onkeydown = (e) => {
+                if(e.key === 'Enter' && input.value.trim() !== "") {
+                    db.ref('chat').push({ u: nick, m: input.value, t: Date.now() });
+                    input.value = "";
+                }
+            };
+            db.ref('chat').limitToLast(15).on('child_added', s => {
+                const d = s.val();
+                const div = document.createElement('div');
+                div.innerHTML = `<b style="color:var(--cyan)">${d.u}:</b> ${d.m}`;
+                const box = document.getElementById('chat-msgs');
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            });
         }
 
-        function initApp() {
-            document.getElementById('header').classList.remove('hidden');
-            document.getElementById('display-nick').innerText = nick;
-            if(nick.toLowerCase() === 'bolacha') document.getElementById('adm-btn').classList.remove('hidden');
-            // ... (Restante da lógica de inicialização) ...
-            renderizarFaseExemplo();
-        }
-
-        function renderizarFaseExemplo() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('game-view').classList.remove('hidden');
-            gameActive = true;
-            loop();
-        }
-
-        function loop() {
+        // --- SISTEMA MULTIPLAYER ---
+        function syncPos() {
             if(!gameActive) return;
-            // Lógica de movimento simplificada para exemplo
-            atualizarCamera();
-            requestAnimationFrame(loop);
+            db.ref(`online/${currentMapId}/${nick}`).set({ x: pX, y: pY, t: Date.now() });
         }
 
-        function atualizarCamera() {
-            const world = document.getElementById('world');
-            const view = document.getElementById('game-view');
-            // CENTRALIZAÇÃO DINÂMICA
-            const camX = (view.clientWidth / 2) - pX;
-            const camY = (view.clientHeight / 2) - pY;
-            world.style.transform = `translate(${camX}px, ${camY}px)`;
+        function watchPlayers() {
+            db.ref(`online/${currentMapId}`).on('value', s => {
+                const players = s.val();
+                document.querySelectorAll('.ghost').forEach(g => g.remove());
+                for(let id in players) {
+                    if(id !== nick && Date.now() - players[id].t < 5000) {
+                        const g = document.createElement('div');
+                        g.className = 'ghost';
+                        g.style.left = players[id].x + 'px';
+                        g.style.top = players[id].y + 'px';
+                        g.innerHTML = `<div class="ghost-name">${id}</div>`;
+                        document.getElementById('world').appendChild(g);
+                    }
+                }
+            });
         }
 
-        function abrirAdm() { document.getElementById('adm-panel').classList.remove('hidden'); }
-        
-        function enviarMensagemGlobal() {
-            const msg = document.getElementById('global-input').value;
-            db.ref('sistema/mensagemGlobal').set(msg);
-            document.getElementById('adm-panel').classList.add('hidden');
+        // --- INICIALIZAÇÃO CORRIGIDA ---
+        function initApp() {
+            if(!nick) return renderLogin();
+            document.getElementById('header').classList.remove('hidden');
+            setupChat();
+            
+            db.ref('ranking/' + nick).on('value', s => {
+                moedas = (s.val() && s.val().moedas) || 500;
+                document.getElementById('coins').innerText = Math.floor(moedas);
+                renderMenu();
+            });
         }
 
-        if(nick) initApp();
+        function renderMenu() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="menu-card">
+                    <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
+                    <button class="btn" style="background:var(--cyan)" onclick="telaGaleria()">JOGAR MAPAS</button>
+                    <button class="btn" style="background:var(--purple); color:white" onclick="alert('Editor em breve...')">CRIAR MAPA</button>
+                    <div id="mini-rank" style="margin-top:15px; font-size:12px; text-align:left;"></div>
+                </div>
+            `;
+        }
+
+        function renderLogin() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="menu-card">
+                    <h2>BEM-VINDO</h2>
+                    <input type="text" id="n-in" placeholder="Seu Nick..." style="width:80%; padding:10px; margin-bottom:10px;">
+                    <button class="btn" style="background:var(--cyan)" onclick="setNick()">ENTRAR</button>
+                </div>
+            `;
+        }
+
+        function setNick() {
+            const n = document.getElementById('n-in').value.trim();
+            if(n) { nick = n; localStorage.setItem('maker_nick', n); initApp(); }
+        }
+
+        window.onload = initApp;
     </script>
 </body>
 </html>
