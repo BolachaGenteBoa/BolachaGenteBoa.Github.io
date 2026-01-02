@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V30 TEMP MOD</title>
+    <title>BOLACHA MAKER - V31 FULL RESTORE</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --blue: #4444ff; --bg: #050510; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
-        
         #header { background: #0a0a20; height: 50px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
         #main-content { height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; width: 100%; }
-        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 25px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 400px; text-align: center; }
-        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .btn { width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-cyan { background: var(--cyan); color: #000; }
-        .btn-blue { background: var(--blue); color: #fff; }
+        .btn-purple { background: var(--purple); color: #fff; }
+        .btn-red { background: var(--red); color: #fff; }
         input { width: 90%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; }
-        
-        #adm-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
-        #global-msg { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 80%; background: var(--purple); padding: 10px; border-radius: 10px; z-index: 5000; text-align: center; }
+        #rank-box { background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; margin: 10px 0; max-height: 120px; overflow-y: auto; text-align: left; font-size: 14px; }
+        .rank-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #222; }
+        #global-msg { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 80%; background: var(--purple); padding: 10px; border-radius: 10px; z-index: 5000; text-align: center; border: 1px solid var(--cyan); }
+        #adm-panel { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -28,36 +29,32 @@
     <div id="header" class="hidden">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="abrirAdm()" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">PAINEL</button>
+        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.remove('hidden')" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">PAINEL</button>
     </div>
 
     <div id="main-content">
         <div id="login-screen" class="menu-card">
-            <h1>BOLACHA MAKER</h1>
+            <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
             <input type="text" id="nick-input" placeholder="Seu Nick...">
             <button class="btn btn-cyan" onclick="salvarNick()">ENTRAR</button>
         </div>
     </div>
 
     <div id="adm-panel" class="hidden">
-        <div class="menu-card" style="border-color: var(--red); max-width: 450px;">
-            <h2 id="adm-title" style="color:var(--red)">PAINEL</h2>
-            
+        <div class="menu-card" style="border-color: var(--red);">
+            <h2 id="adm-title">PAINEL</h2>
             <div id="owner-only" class="hidden">
-                <p style="color:var(--yellow)">👑 Funções de Dono</p>
-                <input type="text" id="mod-nick" placeholder="Nick para dar MOD">
-                <input type="number" id="mod-time" placeholder="Tempo (minutos)">
-                <button class="btn btn-blue" onclick="darModTemporario()">DAR MOD TEMP</button>
+                <input type="text" id="mod-nick" placeholder="Nick para MOD">
+                <input type="number" id="mod-time" placeholder="Minutos">
+                <button class="btn btn-purple" style="background:var(--blue)" onclick="darModTemporario()">DAR MOD TEMP</button>
                 <hr style="border:1px solid #333">
-                <input type="text" id="target-n" placeholder="Nick do Player">
+                <input type="text" id="target-n" placeholder="Nick Player">
                 <input type="number" id="target-v" placeholder="Moedas">
-                <button class="btn btn-purple" onclick="admAddMoedas()">DAR MOEDAS</button>
+                <button class="btn btn-cyan" onclick="admAddMoedas()">DAR MOEDAS</button>
             </div>
-
-            <p>📣 Aviso Global</p>
+            <p>Aviso Global:</p>
             <input type="text" id="global-input" placeholder="Mensagem...">
-            <button class="btn btn-cyan" onclick="enviarMensagemGlobal()">ENVIAR AVISO</button>
-            
+            <button class="btn btn-red" onclick="enviarMensagemGlobal()">ENVIAR AVISO</button>
             <button class="btn" onclick="document.getElementById('adm-panel').classList.add('hidden')">FECHAR</button>
         </div>
     </div>
@@ -67,9 +64,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let nick = localStorage.getItem('maker_nick');
-        let isOwner = false;
-        let isMod = false;
+        let nick = localStorage.getItem('maker_nick'), moedas = 0, inventario = { block: true, spawn: true, flag: true }, isOwner = false, isMod = false;
 
         function salvarNick() {
             const val = document.getElementById('nick-input').value.trim();
@@ -82,78 +77,81 @@
             document.getElementById('header').classList.remove('hidden');
             isOwner = nick.toLowerCase() === 'bolacha';
             
-            // Checar se é MOD Temporário
             db.ref('moderadores/' + nick).on('value', s => {
-                const data = s.val();
-                if(data && data.expira > Date.now()) {
-                    isMod = true;
-                    document.getElementById('display-nick').innerHTML = `<b style="color:var(--blue)">[MOD] ${nick}</b>`;
+                const d = s.val();
+                if(d && d.expira > Date.now()) {
+                    isMod = true; document.getElementById('display-nick').innerHTML = `<b style="color:var(--blue)">[MOD] ${nick}</b>`;
                     document.getElementById('adm-btn').classList.remove('hidden');
-                    document.getElementById('adm-title').innerText = "PAINEL MODERADOR";
                 } else if(isOwner) {
                     document.getElementById('display-nick').innerHTML = `<b style="color:var(--red)">[DONO] ${nick}</b>`;
                     document.getElementById('adm-btn').classList.remove('hidden');
                     document.getElementById('owner-only').classList.remove('hidden');
-                    document.getElementById('adm-title').innerText = "PAINEL DONO";
                 } else {
-                    isMod = false;
                     document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
-                    if(!isOwner) document.getElementById('adm-btn').classList.add('hidden');
-                }
-            });
-
-            db.ref('sistema/mensagemGlobal').on('value', s => {
-                const msg = s.val();
-                if(msg) {
-                    const box = document.getElementById('global-msg');
-                    box.innerText = "📣 " + msg;
-                    box.classList.remove('hidden');
-                    setTimeout(() => box.classList.add('hidden'), 8000);
                 }
             });
 
             db.ref('ranking/' + nick).on('value', s => {
-                document.getElementById('coins').innerText = Math.floor((s.val() && s.val().moedas) || 500);
+                let d = s.val() || { moedas: 500 };
+                moedas = d.moedas; inventario = d.inventario || { block: true, spawn: true, flag: true };
+                document.getElementById('coins').innerText = Math.floor(moedas);
             });
 
+            db.ref('sistema/mensagemGlobal').on('value', s => {
+                if(s.val()) {
+                    document.getElementById('global-msg').innerText = "📣 " + s.val();
+                    document.getElementById('global-msg').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('global-msg').classList.add('hidden'), 7000);
+                }
+            });
             telaMenu();
         }
 
-        function abrirAdm() { document.getElementById('adm-panel').classList.remove('hidden'); }
+        function telaMenu() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="menu-card">
+                    <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
+                    <div id="rank-box">Carregando Ranking...</div>
+                    <button class="btn btn-cyan" onclick="alert('Lógica de Galeria...')">▶ JOGAR</button>
+                    <button class="btn btn-purple" onclick="alert('Lógica de Editor...')">🛠 CRIAR</button>
+                    <button class="btn" style="background:var(--yellow); color:black" onclick="telaLoja()">🛒 LOJA</button>
+                </div>
+            `;
+            db.ref('ranking').orderByChild('moedas').limitToLast(5).once('value', s => {
+                let h = "<b>🏆 TOP 5 PLAYERS</b><br>"; let list = [];
+                s.forEach(u => list.push({n: u.key, m: u.val().moedas}));
+                list.reverse().forEach((u, i) => h += `<div class="rank-line"><span>${i+1}. ${u.n}</span><span>$${Math.floor(u.m)}</span></div>`);
+                document.getElementById('rank-box').innerHTML = h;
+            });
+        }
+
+        function telaLoja() {
+            const itens = [{id:'lava', n:'Lava', p:800}, {id:'ice', n:'Gelo', p:1000}, {id:'spring', n:'Mola', p:1600}, {id:'sand', n:'Areia', p:1200}, {id:'ghost', n:'Fantasma', p:2000}];
+            let h = `<h2>LOJA</h2>`;
+            itens.forEach(i => {
+                let ok = inventario[i.id];
+                h += `<button class="btn" style="background:${ok?'#222':'var(--purple)'}" onclick="${ok?'':'comprar(\''+i.id+'\','+i.p+')'}">${i.n} ${ok?'✔':'$'+i.p}</button>`;
+            });
+            h += `<button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card">${h}</div>`;
+        }
+
+        function comprar(id, p) { if(moedas >= p) { db.ref('ranking/'+nick).update({ moedas: moedas - p, [`inventario/${id}`]: true }); alert("Comprado!"); telaLoja(); } }
 
         function darModTemporario() {
-            if(!isOwner) return;
-            const target = document.getElementById('mod-nick').value;
-            const minutos = parseInt(document.getElementById('mod-time').value);
-            if(!target || !minutos) return alert("Preencha tudo!");
-            
-            const expiraEm = Date.now() + (minutos * 60 * 1000);
-            db.ref('moderadores/' + target).set({ expira: expiraEm, por: nick });
-            alert(target + " agora é MOD por " + minutos + " minutos!");
+            const t = document.getElementById('mod-nick').value, m = parseInt(document.getElementById('mod-time').value);
+            if(t && m) db.ref('moderadores/' + t).set({ expira: Date.now() + (m*60000) });
         }
 
         function enviarMensagemGlobal() {
-            if(!isOwner && !isMod) return;
             const msg = document.getElementById('global-input').value;
             db.ref('sistema/mensagemGlobal').set(msg);
             setTimeout(() => db.ref('sistema/mensagemGlobal').set(null), 3000);
         }
 
         function admAddMoedas() {
-            if(!isOwner) return alert("Só o Dono pode dar moedas!");
-            let t=document.getElementById('target-n').value; 
-            let v=parseInt(document.getElementById('target-v').value);
+            let t=document.getElementById('target-n').value, v=parseInt(document.getElementById('target-v').value);
             db.ref('ranking/'+t+'/moedas').transaction(c=>(c||0)+v);
-        }
-
-        function telaMenu() {
-            document.getElementById('main-content').innerHTML = `
-                <div class="menu-card">
-                    <h1 style="color:var(--cyan)">MENU</h1>
-                    <button class="btn btn-cyan" onclick="alert('Lógica de Galeria...')">▶ JOGAR</button>
-                    <button class="btn btn-purple" onclick="alert('Lógica de Editor...')">🛠 CRIAR</button>
-                </div>
-            `;
         }
 
         if(nick) initApp();
