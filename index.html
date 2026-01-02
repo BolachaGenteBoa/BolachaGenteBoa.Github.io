@@ -3,37 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOLACHA MAKER - V11 MOD</title>
-    
+    <title>BOLACHA MAKER - V13 SHOP</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
         :root { --cyan: #00f2ff; --purple: #bc13fe; --yellow: #ffcc00; --red: #ff4444; --bg: #050510; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; touch-action: none; }
         .hidden { display: none !important; }
-
         #header { background: #0a0a20; height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); z-index: 1000; position: relative; }
-        
         #main-content { height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; }
-        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 25px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 450px; text-align: center; }
-        
-        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .menu-card { background: rgba(10, 10, 35, 0.98); padding: 20px; border-radius: 20px; border: 2px solid var(--purple); width: 90%; max-width: 450px; text-align: center; }
+        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-cyan { background: var(--cyan); color: #000; }
         .btn-purple { background: var(--purple); color: #fff; }
-        .btn-red { background: var(--red); color: white; }
-
-        /* LISTA DE MAPAS COM EXCLUIR */
-        .map-item { display: flex; gap: 10px; margin: 8px 0; }
-        .btn-del { background: var(--red); color: white; border: none; border-radius: 8px; width: 45px; font-weight: bold; cursor: pointer; }
-
-        /* RANKING */
-        #rank-wrapper { width: 100%; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 10px; margin-bottom: 15px; border: 1px solid #333; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 12px; font-size: 11px; color: var(--cyan); border-bottom: 1px solid var(--purple); background: #0a0a20; }
-        td { padding: 12px; font-size: 14px; border-bottom: 1px solid #222; }
-
-        /* ENGINE */
+        .btn-shop { background: var(--yellow); color: #000; }
+        .map-item { display: flex; gap: 5px; margin: 5px 0; }
+        .btn-del { background: var(--red); color: white; border: none; border-radius: 8px; width: 40px; cursor: pointer; }
         #game-view { width: 100%; height: 100%; background: #000; overflow: hidden; position: relative; }
         #world { position: absolute; top: 0; left: 0; }
         #player { position: absolute; width: 30px; height: 30px; background: var(--cyan); border: 2px solid #fff; border-radius: 6px; box-shadow: 0 0 15px var(--cyan); z-index: 99; }
@@ -42,9 +27,7 @@
         .lava { background: var(--red); box-shadow: 0 0 10px var(--red); }
         .spawn { border: 2px dashed var(--cyan); background: rgba(0, 242, 255, 0.1); }
         .flag { background: var(--yellow); clip-path: polygon(0 0, 100% 50%, 0 100%); }
-
-        /* EDITOR */
-        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; flex-grow: 1; }
+        #editor-grid { display: grid; grid-template-columns: repeat(60, 40px); grid-template-rows: repeat(30, 40px); background: #111; overflow: auto; }
         .cell { width: 40px; height: 40px; border: 1px solid #222; }
     </style>
 </head>
@@ -53,21 +36,19 @@
     <div id="header">
         <div id="display-nick">...</div>
         <div style="color: var(--yellow); font-weight: bold;">💰 <span id="coins">0</span></div>
-        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer;">ADM PANEL</button>
+        <button id="adm-btn" class="hidden" onclick="document.getElementById('adm-panel').classList.toggle('hidden')" style="background:red; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">ADM</button>
     </div>
 
     <div id="main-content"></div>
 
     <div id="adm-panel" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; display:flex; align-items:center; justify-content:center;">
         <div class="menu-card">
-            <h2 style="color:var(--red); margin:0;">OVERLORD ADMIN</h2>
-            <hr border="1" color="#333">
-            <input type="text" id="target-n" placeholder="Nick do Alvo" style="width:90%; padding:12px; margin:5px; border-radius:8px;">
-            <input type="number" id="target-v" placeholder="Valor (Moedas/Horas)" style="width:90%; padding:12px; margin:5px; border-radius:8px;">
-            <button class="btn btn-cyan" onclick="admAddMoedas()">ADICIONAR MOEDAS</button>
-            <button class="btn btn-purple" onclick="admDarAdmin()">DAR ADMIN (TEMP)</button>
-            <button class="btn btn-red" onclick="admBanir()">BANIR JOGADOR</button>
-            <button class="btn" style="background:#fff; color:#000;" onclick="document.getElementById('adm-panel').classList.add('hidden')">FECHAR</button>
+            <h2 style="color:red">ADM PANEL</h2>
+            <input type="text" id="target-n" placeholder="Nick" style="width:90%; padding:10px; margin:5px;">
+            <input type="number" id="target-v" placeholder="Valor" style="width:90%; padding:10px; margin:5px;">
+            <button class="btn btn-cyan" onclick="admAddMoedas()">DAR MOEDAS</button>
+            <button class="btn btn-red" onclick="admBanir()">BANIR</button>
+            <button class="btn" onclick="document.getElementById('adm-panel').classList.add('hidden')">SAIR</button>
         </div>
     </div>
 
@@ -83,221 +64,165 @@
         const db = firebase.database();
 
         let nick = localStorage.getItem('maker_nick') || prompt("Seu Nick:");
-        if(!nick) nick = "Player" + Math.floor(Math.random()*999);
+        if(!nick) nick = "Ninja" + Math.floor(Math.random()*999);
         localStorage.setItem('maker_nick', nick);
 
         let moedas = 0;
-        let keys = {};
+        let mySkin = 'var(--cyan)';
         let isModerator = false;
         let gameActive = false;
+        let keys = {};
         let pX=0, pY=0, vX=0, vY=0, noChao=false, blocosAtuais=[];
 
         window.onkeydown=(e)=>keys[e.code]=true;
         window.onkeyup=(e)=>keys[e.code]=false;
 
         function setup() {
-            db.ref('bans/' + nick).on('value', s => { if(s.val()) document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:100px;'>BANIDO!</h1>"; });
-
             db.ref('ranking/' + nick).on('value', s => {
-                if(!s.exists()) db.ref('ranking/' + nick).set({ moedas: 500 });
+                if(!s.exists()) db.ref('ranking/' + nick).set({ moedas: 500, skin: 'var(--cyan)' });
                 else {
-                    let val = s.val().moedas;
-                    if(!isFinite(val) || val > 1000000000) { db.ref('ranking/' + nick).update({moedas: 500}); val = 500; }
-                    moedas = val;
+                    let d = s.val();
+                    moedas = isFinite(d.moedas) ? d.moedas : 500;
+                    mySkin = d.skin || 'var(--cyan)';
                     document.getElementById('coins').innerText = Math.floor(moedas);
                 }
             });
-            
             db.ref('admins/' + nick).on('value', s => {
-                let isD = (nick.toLowerCase() === 'bolacha');
-                let isA = s.exists() && Date.now() < s.val().expires;
-                isModerator = isD || isA;
-                document.getElementById('display-nick').innerHTML = `<b>${nick}</b> ${isD?'<small style="color:yellow">[DONO]</small>':(isA?'<small style="color:cyan">[MOD]</small>':'')}`;
+                isModerator = (nick.toLowerCase() === 'bolacha' || s.exists());
+                document.getElementById('display-nick').innerHTML = `<b>${nick}</b>`;
                 if(isModerator) document.getElementById('adm-btn').classList.remove('hidden');
             });
-
             telaMenu();
-        }
-
-        function admAddMoedas() {
-            let t = document.getElementById('target-n').value;
-            let v = parseInt(document.getElementById('target-v').value);
-            db.ref('ranking/'+t).once('value', s => {
-                let atual = (s.val() && isFinite(s.val().moedas)) ? s.val().moedas : 0;
-                db.ref('ranking/'+t).update({moedas: atual + v});
-            });
-        }
-
-        function admDarAdmin() {
-            let t = document.getElementById('target-n').value;
-            let h = parseFloat(document.getElementById('target-v').value);
-            db.ref('admins/'+t).set({expires: Date.now() + (h * 3600000)});
-        }
-
-        function admBanir() {
-            let t = document.getElementById('target-n').value;
-            db.ref('bans/'+t).set(true);
-            db.ref('ranking/'+t).remove();
-        }
-
-        function excluirMapa(id) {
-            if(confirm("Deseja deletar este mapa permanentemente?")) {
-                db.ref('mapas/' + id).remove();
-                telaGaleria();
-            }
         }
 
         function telaMenu() {
             gameActive = false;
             document.getElementById('main-content').innerHTML = `
                 <div class="menu-card">
-                    <h1 style="color:var(--cyan); margin:0;">BOLACHA MAKER</h1>
-                    <p style="color:#aaa; font-size:12px; margin-bottom:20px;">V11 - SISTEMA DE MODERAÇÃO</p>
-                    <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR NÍVEIS</button>
-                    <button class="btn btn-purple" onclick="telaEditor()">CRIAR MAPA</button>
+                    <h1 style="color:var(--cyan)">BOLACHA MAKER</h1>
+                    <button class="btn btn-cyan" onclick="telaGaleria()">JOGAR</button>
+                    <button class="btn btn-purple" onclick="telaEditor()">EDITOR</button>
+                    <button class="btn btn-shop" onclick="telaLoja()">LOJA DE SKINS</button>
                     <button class="btn" style="background:#222; color:white;" onclick="telaRanking()">RANKING</button>
                 </div>
             `;
         }
 
+        function telaLoja() {
+            const skins = [
+                {n: 'Verde Neon', c: '#39ff14', p: 300},
+                {n: 'Rosa Choque', c: '#ff00ff', p: 500},
+                {n: 'Ouro', c: '#ffd700', p: 1000},
+                {n: 'Branco Fantasma', c: '#ffffff', p: 1500},
+                {n: 'Vazio Absolute', c: '#111', p: 2500}
+            ];
+            let html = `<h2>LOJA</h2>`;
+            skins.forEach(s => {
+                html += `<button class="btn" style="background:${s.c}; color:${s.c=='#ffffff'?'#000':'#fff'}" onclick="comprarSkin('${s.c}', ${s.p})">${s.n} (💰${s.p})</button>`;
+            });
+            html += `<button class="btn btn-red" onclick="telaMenu()">VOLTAR</button>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card">${html}</div>`;
+        }
+
+        function comprarSkin(cor, preco) {
+            if(moedas >= preco) {
+                db.ref('ranking/' + nick).update({ moedas: moedas - preco, skin: cor });
+                alert("Skin comprada e aplicada!");
+            } else {
+                alert("Moedas insuficientes!");
+            }
+        }
+
         function telaRanking() {
-            document.getElementById('main-content').innerHTML = `
-                <div class="menu-card">
-                    <h2>🏆 RANKING</h2>
-                    <div id="rank-wrapper">
-                        <table>
-                            <thead><tr><th>#</th><th>PLAYER</th><th>MOEDAS</th></tr></thead>
-                            <tbody id="rank-body"></tbody>
-                        </table>
-                    </div>
-                    <button class="btn btn-cyan" onclick="setup()">VOLTAR</button>
-                </div>
-            `;
-            db.ref('ranking').once('value', s => {
-                let list = [];
-                s.forEach(c => { if(isFinite(c.val().moedas)) list.push({n: c.key, m: c.val().moedas}); });
-                list.sort((a,b) => b.m - a.m);
-                document.getElementById('rank-body').innerHTML = list.slice(0, 20).map((u, i) => `
-                    <tr style="${u.n === nick ? 'background:rgba(0,242,255,0.15)' : ''}">
-                        <td>${i+1}</td><td>${u.n}</td><td>💰 ${Math.floor(u.m)}</td>
-                    </tr>
-                `).join('');
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>RANKING</h2><div id="rank-list"></div><button class="btn btn-cyan" onclick="telaMenu()">VOLTAR</button></div>`;
+            db.ref('ranking').orderByChild('moedas').limitToLast(10).once('value', s => {
+                let items = [];
+                s.forEach(c => { items.push({n: c.key, m: c.val().moedas}); });
+                items.reverse().forEach((u, i) => {
+                    document.getElementById('rank-list').innerHTML += `<p>#${i+1} ${u.n}: 💰${Math.floor(u.m)}</p>`;
+                });
             });
         }
 
         function telaGaleria() {
-            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list" style="max-height:280px; overflow-y:auto;"></div><button class="btn btn-purple" onclick="setup()">VOLTAR</button></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="menu-card"><h2>NÍVEIS</h2><div id="m-list" style="max-height:250px; overflow-y:auto;"></div><button class="btn btn-purple" onclick="telaMenu()">VOLTAR</button></div>`;
             db.ref('mapas').once('value', s => {
                 s.forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = "map-item";
-                    
-                    let btnPlay = document.createElement('button');
-                    btnPlay.className = "btn btn-cyan";
-                    btnPlay.style.margin = "0";
-                    btnPlay.innerText = "MAPA DE: " + m.val().autor.toUpperCase();
-                    btnPlay.onclick = () => iniciar(m.val().dados);
-                    
-                    div.appendChild(btnPlay);
-
-                    if(isModerator) {
-                        let btnDel = document.createElement('button');
-                        btnDel.className = "btn-del";
-                        btnDel.innerText = "X";
-                        btnDel.onclick = () => excluirMapa(m.key);
-                        div.appendChild(btnDel);
-                    }
-                    
+                    let div = document.createElement('div'); div.className = "map-item";
+                    div.innerHTML = `<button class="btn btn-cyan" style="margin:0" onclick="iniciar(JSON.parse('${JSON.stringify(m.val().dados)}'))">${m.val().autor}</button>`;
+                    if(isModerator) div.innerHTML += `<button class="btn-del" onclick="db.ref('mapas/${m.key}').remove(); telaGaleria();">X</button>`;
                     document.getElementById('m-list').appendChild(div);
                 });
             });
         }
 
-        // --- EDITOR E GAMEPLAY MANTIDOS DA V10 ---
-        let tool = 'block';
-        function telaEditor() {
-            document.getElementById('main-content').innerHTML = `
-                <div id="editor-grid"></div>
-                <div style="height:75px; background:#0a0a20; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; border-top:2px solid var(--purple);">
-                    <button onclick="tool='block'" class="block" style="width:30px; height:30px;"></button>
-                    <button onclick="tool='lava'" class="lava" style="width:30px; height:30px;"></button>
-                    <button onclick="tool='spawn'" class="spawn" style="width:30px; height:30px;"></button>
-                    <button onclick="tool='flag'" class="flag" style="width:30px; height:30px;"></button>
-                    <button onclick="tool='erase'" style="background:red; color:white; width:30px; height:30px; font-weight:bold;">X</button>
-                    <button class="btn btn-cyan" style="width:100px; margin:0;" onclick="salvar()">SALVAR</button>
-                    <button class="btn btn-purple" style="width:80px; margin:0;" onclick="setup()">SAIR</button>
-                </div>
-            `;
-            const g = document.getElementById('editor-grid');
-            for(let i=0; i<1800; i++) {
-                const c = document.createElement('div'); c.className = 'cell';
-                c.onmousedown=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
-                c.onmouseenter=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
-                g.appendChild(c);
-            }
-        }
-
-        function salvar() {
-            let d = [];
-            document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
-            if(!d.some(x => x.cl.includes('spawn'))) return alert("COLOQUE UM SPAWN!");
-            db.ref('mapas').push({autor: nick, dados: d});
-            alert("Publicado!"); setup();
-        }
-
         function iniciar(dados) {
-            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player"></div><div id="objs"></div></div></div>`;
+            document.getElementById('main-content').innerHTML = `<div id="game-view"><div id="world"><div id="player" style="background:${mySkin}"></div><div id="objs"></div></div></div>`;
             blocosAtuais = [];
             dados.forEach(d => {
                 let x = (d.id % 60) * 40; let y = Math.floor(d.id / 60) * 40;
-                const o = document.createElement('div');
-                o.className = 'obj ' + d.cl.replace('cell ', '');
+                const o = document.createElement('div'); o.className = 'obj ' + d.cl.replace('cell ', '');
                 o.style.left = x + 'px'; o.style.top = y + 'px';
                 document.getElementById('objs').appendChild(o);
                 if(d.cl.includes('spawn')) { pX = x + 5; pY = y + 5; }
                 if(!d.cl.includes('spawn')) blocosAtuais.push({x, y, type: d.cl});
             });
-            vX = 0; vY = 0;
-            setTimeout(() => { gameActive = true; loop(); }, 300);
+            vX = 0; vY = 0; gameActive = true; loop();
         }
 
         function loop() {
             if(!gameActive) return;
-            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6; 
-            else if(keys['KeyD'] || keys['ArrowRight']) vX = 6; 
-            else vX *= 0.8;
+            if(keys['KeyA'] || keys['ArrowLeft']) vX = -6; else if(keys['KeyD'] || keys['ArrowRight']) vX = 6; else vX *= 0.8;
             if((keys['Space'] || keys['KeyW']) && noChao) { vY = -14; noChao = false; }
-            vY += 0.8;
-            pX += vX;
-            blocosAtuais.forEach(b => {
-                if(b.type.includes('block') && pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
-                    pX -= vX; vX = 0;
-                }
-            });
-            pY += vY;
-            noChao = false;
+            vY += 0.8; pX += vX;
+            blocosAtuais.forEach(b => { if(b.type.includes('block') && pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) { pX -= vX; vX = 0; } });
+            pY += vY; noChao = false;
             blocosAtuais.forEach(b => {
                 if(pX < b.x + 35 && pX + 25 > b.x && pY < b.y + 35 && pY + 25 > b.y) {
-                    if(b.type.includes('block')) {
-                        if(vY > 0) { pY = b.y - 30; vY = 0; noChao = true; }
-                        else if(vY < 0) { pY = b.y + 40; vY = 0; }
-                    }
-                    if(b.type.includes('lava')) { gameActive=false; alert("MORREU!"); setup(); }
+                    if(b.type.includes('block')) { if(vY > 0) { pY = b.y - 30; vY = 0; noChao = true; } else if(vY < 0) { pY = b.y + 40; vY = 0; } }
+                    if(b.type.includes('lava')) { gameActive=false; alert("MORREU!"); telaMenu(); }
                     if(b.type.includes('flag')) { 
                         gameActive=false; 
-                        db.ref('ranking/'+nick).update({moedas: moedas + 100}); 
-                        alert("VITÓRIA!"); setup(); 
+                        db.ref('ranking/' + nick + '/moedas').transaction(c => (c || 0) + 100);
+                        alert("VITÓRIA! +100 moedas"); telaMenu(); 
                     }
                 }
             });
-            if(pY > 1500) { gameActive=false; alert("LIMBO!"); setup(); }
-            let world = document.getElementById('world');
-            if(world) {
-                world.style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
-                document.getElementById('player').style.left = pX + 'px';
-                document.getElementById('player').style.top = pY + 'px';
-            }
+            if(pY > 1500) { gameActive=false; alert("LIMBO!"); telaMenu(); }
+            document.getElementById('world').style.transform = `translate(${window.innerWidth/2 - pX}px, ${window.innerHeight/2 - pY}px)`;
+            document.getElementById('player').style.left = pX + 'px';
+            document.getElementById('player').style.top = pY + 'px';
             requestAnimationFrame(loop);
+        }
+
+        // --- EDITOR ---
+        let tool = 'block';
+        function telaEditor() {
+            document.getElementById('main-content').innerHTML = `<div id="editor-grid"></div><div style="height:70px; background:#0a0a20; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;"><button onclick="tool='block'" class="block" style="width:30px; height:30px"></button><button onclick="tool='lava'" class="lava" style="width:30px; height:30px"></button><button onclick="tool='spawn'" class="spawn" style="width:30px; height:30px"></button><button onclick="tool='flag'" class="flag" style="width:30px; height:30px"></button><button onclick="tool='erase'" style="background:red; width:30px; height:30px">X</button><button class="btn btn-cyan" style="width:100px" onclick="salvar()">SALVAR</button><button class="btn btn-purple" style="width:80px" onclick="telaMenu()">SAIR</button></div>`;
+            for(let i=0; i<1800; i++) {
+                const c = document.createElement('div'); c.className = 'cell';
+                c.onmousedown=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
+                c.onmouseenter=(e)=>{ if(e.buttons===1) c.className='cell '+(tool==='erase'?'':tool); };
+                document.getElementById('editor-grid').appendChild(c);
+            }
+        }
+        function salvar() {
+            let d = []; document.querySelectorAll('.cell').forEach((c, i) => { if(c.classList.length > 1) d.push({id: i, cl: c.className}); });
+            if(!d.some(x => x.cl.includes('spawn'))) return alert("FALTA O SPAWN!");
+            db.ref('mapas').push({autor: nick, dados: d}); alert("Mapa Salvo!"); telaMenu();
+        }
+
+        function admAddMoedas() {
+            let t = document.getElementById('target-n').value;
+            let v = parseInt(document.getElementById('target-v').value);
+            db.ref('ranking/' + t + '/moedas').transaction(c => (c || 0) + v);
+            alert("Feito!");
+        }
+
+        function admBanir() {
+            let t = document.getElementById('target-n').value;
+            db.ref('bans/' + t).set(true);
+            alert("Banido!");
         }
 
         setup();
