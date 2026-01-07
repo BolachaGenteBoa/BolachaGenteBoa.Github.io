@@ -1,98 +1,85 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolacha Pega IP - Vizinhos</title>
+    <title>Lista Global de IPs</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #333; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { width: 95%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        .btn-reg { background-color: #28a745; color: white; }
-        .btn-list { background-color: #007bff; color: white; }
-        #lista-ips { margin-top: 20px; text-align: left; width: 100%; }
-        .item-visitante { background: #fff; border: 1px solid #eee; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 5px solid #007bff; font-size: 14px; }
-        .ip-text { color: #d63384; font-weight: bold; }
+        body { font-family: sans-serif; background: #121212; color: white; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .log-list { margin-top: 20px; border-top: 1px solid #333; padding-top: 10px; }
+        .ip-entry { background: #2a2a2a; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-family: monospace; border-left: 4px solid #00ff00; }
+        .time { font-size: 0.8rem; color: #888; }
+        h2 { text-align: center; color: #00ff00; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h2>📍 Quem está perto?</h2>
-        <p id="display-ip" style="font-size: 12px; color: #777;">Detectando seu IP...</p>
-        
-        <input type="text" id="nomeUsuario" placeholder="Seu apelido">
-        <button class="btn btn-reg" id="btnSalvar">Registrar minha localização</button>
-        <button class="btn btn-list" id="btnVer">Ver IPs da Galera</button>
+<div class="container">
+    <h2>📡 Log de Conexões</h2>
+    <p id="status" style="text-align: center;">Registrando seu acesso...</p>
+    
+    <div class="log-list" id="lista-geral">
+        </div>
+</div>
 
-        <div id="lista-ips"></div>
-    </div>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCrK_2OujfYGG6jys2YBhtGfYKsMaBE_CY",
+        authDomain: "bolachaquepegaip.firebaseapp.com",
+        projectId: "bolachaquepegaip",
+        storageBucket: "bolachaquepegaip.firebasestorage.app",
+        messagingSenderId: "646321484644",
+        appId: "1:646321484644:web:3070ecf4ca318497300071"
+    };
 
-        // Suas configurações do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCrK_2OujfYGG6jys2YBhtGfYKsMaBE_CY",
-            authDomain: "bolachaquepegaip.firebaseapp.com",
-            projectId: "bolachaquepegaip",
-            storageBucket: "bolachaquepegaip.firebasestorage.app",
-            messagingSenderId: "646321484644",
-            appId: "1:646321484644:web:3070ecf4ca318497300071",
-            measurementId: "G-235FRHXN74"
-        };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        let userIP = "";
-
-        // Pega o IP usando a API pública do ipify
-        fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-                userIP = data.ip;
-                document.getElementById('display-ip').innerText = "Seu IP detectado: " + userIP;
-            });
-
-        // Salva os dados no Firestore
-        document.getElementById('btnSalvar').onclick = async () => {
-            const nome = document.getElementById('nomeUsuario').value || "Anônimo";
-            if (!userIP) return alert("Aguarde o IP ser carregado...");
-
-            try {
-                await addDoc(collection(db, "visitantes"), {
-                    nome: nome,
-                    ip: userIP,
-                    data: serverTimestamp()
-                });
-                alert("Registrado! Clique em 'Ver IPs' para se encontrar na lista.");
-            } catch (e) {
-                console.error("Erro ao salvar: ", e);
-                alert("Erro! Verifique se as Regras do Firestore estão públicas.");
-            }
-        };
-
-        // Busca e lista os IPs
-        document.getElementById('btnVer').onclick = async () => {
-            const listaDiv = document.getElementById('lista-ips');
-            listaDiv.innerHTML = "Carregando vizinhos...";
-
-            const q = query(collection(db, "visitantes"), orderBy("data", "desc"));
-            const snapshot = await getDocs(q);
+    // 1. REGISTRO AUTOMÁTICO (Sem filtros de distância)
+    async function init() {
+        try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
             
-            listaDiv.innerHTML = "";
-            snapshot.forEach(doc => {
-                const item = doc.data();
-                listaDiv.innerHTML += `
-                    <div class="item-visitante">
-                        <b>${item.nome}</b> está no IP <span class="ip-text">${item.ip}</span>
-                    </div>
-                `;
+            // Salva no Firestore
+            await addDoc(collection(db, "visitantes"), {
+                ip: data.ip,
+                data_acesso: serverTimestamp()
             });
-        };
-    </script>
+
+            document.getElementById('status').innerText = "Seu IP (" + data.ip + ") foi registrado!";
+            carregarTodosIps(); // Atualiza a lista logo após salvar
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // 2. MOSTRAR TUDO O QUE ESTÁ NO BANCO
+    async function carregarTodosIps() {
+        const div = document.getElementById('lista-geral');
+        const q = query(collection(db, "visitantes"), orderBy("data_acesso", "desc"));
+        const snapshot = await getDocs(q);
+        
+        div.innerHTML = ""; // Limpa a lista antes de carregar
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            const dataFormatada = d.data_acesso ? d.data_acesso.toDate().toLocaleString() : "Agora";
+            div.innerHTML += `
+                <div class="ip-entry">
+                    <strong>IP:</strong> ${d.ip}<br>
+                    <span class="time">Acesso em: ${dataFormatada}</span>
+                </div>
+            `;
+        });
+    }
+
+    init();
+</script>
+
 </body>
 </html>
